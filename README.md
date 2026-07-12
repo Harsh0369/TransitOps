@@ -18,10 +18,10 @@ Built as a pat of a software engineering hackathon, TransitOps emphasizes on cle
 ##  Stack Structure:
 
 **FRONTEND**
-- `client/` - Next.js + TypeScript
-- **BACKEND**
+- `client/` - Next.js + TypeScript+ Tailwind CSS
+**BACKEND**
 - `server/` - Express + Node +PostgreSQL
-- **DevOps**
+**DevOps**
 - Docker
 
 ## Current Status
