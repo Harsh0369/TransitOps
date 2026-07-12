@@ -57,13 +57,28 @@ export class TripService {
 
   async dispatchTrip(tripId: string, userId: string) {
     return prisma.$transaction(async (tx) => {
-      const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { vehicle: true, driver: true } });
+      const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { vehicle: { include: { compliances: true } }, driver: true } });
       if (!trip) throw new Error('Trip not found');
       if (trip.status !== 'DRAFT') throw new Error('Only DRAFT trips can be dispatched');
 
-      // Ensure they didn't get assigned to another trip in the meantime
-      if (trip.vehicle.status === 'ON_TRIP') throw new Error('Vehicle is already on a trip');
-      if (trip.driver.status === 'ON_TRIP') throw new Error('Driver is already on a trip');
+      // Compliance validation check
+      const now = Date.now();
+      const requiredTypes = ['INSURANCE', 'PUC', 'FITNESS', 'REGISTRATION'];
+      for (const type of requiredTypes) {
+        const comp = trip.vehicle.compliances.find((c: any) => c.type === type);
+        if (!comp) {
+          throw new Error(`Vehicle ${type.toLowerCase()} certificate is missing. Vehicle is not roadworthy.`);
+        }
+        if (now > new Date(comp.expiryDate).getTime()) {
+          throw new Error(`Vehicle ${type.toLowerCase()} has expired. Vehicle is not roadworthy.`);
+        }
+      }
+
+      if (trip.vehicle.status === 'IN_SHOP') throw new Error('Vehicle is currently IN_SHOP and not roadworthy.');
+      if (trip.vehicle.status === 'RETIRED') throw new Error('Vehicle is RETIRED and not roadworthy.');
+
+      if (trip.vehicle.status === 'ON_TRIP') throw new Error('Vehicle is already ON_TRIP');
+      if (trip.driver.status === 'ON_TRIP') throw new Error('Driver is already ON_TRIP');
 
       // 1. Update trip status
       const updatedTrip = await tx.trip.update({

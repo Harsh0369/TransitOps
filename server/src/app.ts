@@ -7,6 +7,11 @@ import authRoute from './routes/auth.route';
 import vehicleRoute from './routes/vehicle.route';
 import driverRoute from './routes/driver.route';
 import tripRoute from './routes/trip.route';
+import userRoute from './routes/user.route';
+import maintenanceRoute from './routes/maintenance.route';
+import financeRoute from './routes/finance.route';
+import complianceRoute from './routes/compliance.route';
+import dashboardRoute from './routes/dashboard.route';
 import sampleRoute from './routes/sample.route';
 import { globalErrorMiddleware, notFoundMiddleware } from './middlewares/error.middleware';
 
@@ -25,6 +30,11 @@ app.use('/api/auth', authRoute);
 app.use('/api/vehicles', vehicleRoute);
 app.use('/api/drivers', driverRoute);
 app.use('/api/trips', tripRoute);
+app.use('/api/users', userRoute);
+app.use('/api/maintenance', maintenanceRoute);
+app.use('/api/finance', financeRoute);
+app.use('/api/compliance', complianceRoute);
+app.use('/api/dashboard', dashboardRoute);
 app.use('/api/sample', sampleRoute);
 
 // Error Handling
