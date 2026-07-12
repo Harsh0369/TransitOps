@@ -1,48 +1,24 @@
-# Hackathon Starter Template
+# TransitOps
 
-A production-ready full-stack boilerplate designed for hackathons. Focus on building your MVP instead of setting up infrastructure.
+TransitOps is a Transport Operations ERP for managing fleets, drivers, and trips. We are currently building this as part of a hackathon.
 
-## Project Name
-Your Project Name Here
+## Structure
+- `client/` - Next.js frontend (WIP)
+- `server/` - Express + Node backend 
 
-## Folder Structure
-- `client/`: Next.js App Router (Frontend)
-- `server/`: Express + TypeScript (Backend)
+## Current Status
+We just started setting up the backend database schemas using Prisma and PostgreSQL.
 
-## Tech Stack
-### Frontend
-- Next.js (App Router)
-- TypeScript
-- Tailwind CSS
+## Running Locally
 
-### Backend
-- Express.js
-- TypeScript
-- PostgreSQL (Preferred)
-- Prisma (Preferred ORM)
-- Zod (Validation)
+**Backend:**
+1. cd server
+2. npm install
+3. set up your `.env` (check `.env.example`)
+4. run `npx prisma db push` or migrate to set up the DB
+5. `npm run dev`
 
-## How to Run
-
-### Backend
-1. `cd server`
-2. `npm install`
-3. Copy `.env.example` to `.env` and fill in values.
-4. `npm run dev` (Starts backend on port 8000)
-
-### Frontend
-1. `cd client`
-2. `npm install`
-3. `npm run dev` (Starts frontend on port 3000)
-
-## Deployment
-- **Backend:** Dockerized (see `Dockerfile` in `server/`).
-- **Frontend:** Can be deployed to Vercel, Netlify, or standard Node server.
-
-## Contributing
-- Every team member should contribute.
-- Use meaningful commit messages.
-- Commit frequently.
-
-## License
-MIT
+**Frontend:**
+1. cd client
+2. npm install
+3. `npm run dev`
