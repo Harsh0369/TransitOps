@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useAppContext } from '../providers/AppProvider';
-import { Users, Phone, Award, ShieldAlert, CheckCircle, Clock } from 'lucide-react';
+import { Phone, Award, ShieldAlert, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { DriverStatus } from '../types';
 
 export const DriversView = () => {
@@ -55,6 +55,30 @@ export const DriversView = () => {
     return 'bg-rose-500';
   };
 
+  const getPerformanceScore = (drv: (typeof drivers)[number]) => {
+    const performance = drv.performance;
+    if (!performance) {
+      return 100;
+    }
+
+    const score = 100 + performance.onTimeDeliveries * 2 - performance.lateDeliveries * 8 - performance.violations * 10 - performance.breakdowns * 12;
+    return Math.max(0, Math.min(100, score));
+  };
+
+  const getPerformanceScoreColor = (score: number) => {
+    if (score >= 90) return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+    if (score >= 80) return 'text-indigo-600 bg-indigo-50 border-indigo-100';
+    if (score >= 70) return 'text-amber-600 bg-amber-50 border-amber-100';
+    return 'text-rose-600 bg-rose-50 border-rose-100';
+  };
+
+  const getPerformanceBarColor = (score: number) => {
+    if (score >= 90) return 'bg-emerald-500';
+    if (score >= 80) return 'bg-indigo-500';
+    if (score >= 70) return 'bg-amber-500';
+    return 'bg-rose-500';
+  };
+
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
@@ -64,52 +88,94 @@ export const DriversView = () => {
 
       {/* Grid listing */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {drivers.map((drv) => (
-          <div key={drv.id} className="bg-white border border-zinc-100 hover:border-zinc-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between group hover:shadow-md transition-all duration-200">
-            <div className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center font-bold text-zinc-600 shadow-sm group-hover:scale-105 transition-transform">
-                    {drv.name.split(' ').map(n => n[0]).join('')}
+        {drivers.map((drv) => {
+          const performanceScore = getPerformanceScore(drv);
+          const performance = drv.performance;
+
+          return (
+            <div key={drv.id} className="bg-white border border-zinc-100 hover:border-zinc-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between group hover:shadow-md transition-all duration-200">
+              <div className="space-y-3">
+                <div className="flex items-start justify-between">
+                  <div className="flex gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center font-bold text-zinc-600 shadow-sm group-hover:scale-105 transition-transform">
+                      {drv.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-zinc-800">{drv.name}</h3>
+                      <p className="text-[10px] text-zinc-400 font-medium tracking-wide">License: {drv.licenseCategory} ({drv.licenseNumber})</p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-zinc-800">{drv.name}</h3>
-                    <p className="text-[10px] text-zinc-400 font-medium tracking-wide">License: {drv.licenseCategory} ({drv.licenseNumber})</p>
+                  {getStatusBadge(drv.status)}
+                </div>
+
+                {/* Safety progress bar */}
+                <div className="space-y-1.5 p-3 bg-zinc-50/50 rounded-xl border border-zinc-100/60">
+                  <div className="flex justify-between items-center text-xs font-semibold">
+                    <span className="text-zinc-500 flex items-center gap-1.5">
+                      <Award className="w-3.5 h-3.5 text-zinc-400" />
+                      Safety Score
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] border font-bold ${getSafetyScoreColor(drv.safetyScore)}`}>
+                      {drv.safetyScore}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-zinc-200/60 h-2 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${getSafetyBarColor(drv.safetyScore)}`}
+                      style={{ width: `${drv.safetyScore}%` }}
+                    ></div>
                   </div>
                 </div>
-                {getStatusBadge(drv.status)}
+
+                {/* Performance analytics */}
+                <div className="space-y-2.5 p-3 bg-zinc-50/60 rounded-xl border border-zinc-100/70">
+                  <div className="flex justify-between items-center text-xs font-semibold">
+                    <span className="text-zinc-600 flex items-center gap-1.5">
+                      <TrendingUp className="w-3.5 h-3.5 text-zinc-400" />
+                      Performance
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-[10px] border font-bold ${getPerformanceScoreColor(performanceScore)}`}>
+                      {performanceScore}/100
+                    </span>
+                  </div>
+                  <div className="w-full bg-zinc-200/70 h-2 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${getPerformanceBarColor(performanceScore)}`}
+                      style={{ width: `${performanceScore}%` }}
+                    ></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="rounded-lg border border-zinc-100 bg-white px-2 py-2">
+                      <div className="text-zinc-400">On time</div>
+                      <div className="font-semibold text-zinc-700">{performance?.onTimeDeliveries ?? 0}</div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-100 bg-white px-2 py-2">
+                      <div className="text-zinc-400">Late</div>
+                      <div className="font-semibold text-zinc-700">{performance?.lateDeliveries ?? 0}</div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-100 bg-white px-2 py-2">
+                      <div className="text-zinc-400">Violations</div>
+                      <div className="font-semibold text-zinc-700">{performance?.violations ?? 0}</div>
+                    </div>
+                    <div className="rounded-lg border border-zinc-100 bg-white px-2 py-2">
+                      <div className="text-zinc-400">Breakdowns</div>
+                      <div className="font-semibold text-zinc-700">{performance?.breakdowns ?? 0}</div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Safety progress bar */}
-              <div className="space-y-1.5 p-3 bg-zinc-50/50 rounded-xl border border-zinc-100/60">
-                <div className="flex justify-between items-center text-xs font-semibold">
-                  <span className="text-zinc-500 flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5 text-zinc-400" />
-                    Safety Score
-                  </span>
-                  <span className={`px-2 py-0.5 rounded text-[10px] border font-bold ${getSafetyScoreColor(drv.safetyScore)}`}>
-                    {drv.safetyScore}%
-                  </span>
-                </div>
-                <div className="w-full bg-zinc-200/60 h-2 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${getSafetyBarColor(drv.safetyScore)}`}
-                    style={{ width: `${drv.safetyScore}%` }}
-                  ></div>
-                </div>
+              {/* Contact details */}
+              <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500">
+                <span className="flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-zinc-400" />
+                  {drv.contactNumber}
+                </span>
+                <span className="text-[10px] text-zinc-400 font-medium">Expires: {drv.licenseExpiry}</span>
               </div>
             </div>
-
-            {/* Contact details */}
-            <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs text-zinc-500">
-              <span className="flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-zinc-400" />
-                {drv.contactNumber}
-              </span>
-              <span className="text-[10px] text-zinc-400 font-medium">Expires: {drv.licenseExpiry}</span>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

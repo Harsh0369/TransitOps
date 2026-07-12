@@ -148,6 +148,12 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2030-05-15',
     contactNumber: '+91 98765 43210',
     safetyScore: 95.5,
+    performance: {
+      onTimeDeliveries: 18,
+      lateDeliveries: 2,
+      violations: 0,
+      breakdowns: 1
+    },
     status: 'ON_TRIP',
     createdAt: '2025-01-12T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
@@ -160,6 +166,12 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2029-08-20',
     contactNumber: '+91 98765 43211',
     safetyScore: 98.2,
+    performance: {
+      onTimeDeliveries: 24,
+      lateDeliveries: 1,
+      violations: 0,
+      breakdowns: 0
+    },
     status: 'AVAILABLE',
     createdAt: '2024-06-01T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
@@ -172,6 +184,12 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2028-11-30',
     contactNumber: '+91 98765 43212',
     safetyScore: 92.0,
+    performance: {
+      onTimeDeliveries: 20,
+      lateDeliveries: 1,
+      violations: 1,
+      breakdowns: 0
+    },
     status: 'ON_TRIP',
     createdAt: '2024-11-22T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
@@ -184,6 +202,12 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2031-01-10',
     contactNumber: '+91 98765 43213',
     safetyScore: 88.7,
+    performance: {
+      onTimeDeliveries: 15,
+      lateDeliveries: 3,
+      violations: 2,
+      breakdowns: 1
+    },
     status: 'AVAILABLE',
     createdAt: '2025-02-01T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
@@ -196,6 +220,12 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2029-04-18',
     contactNumber: '+91 98765 43214',
     safetyScore: 90.0,
+    performance: {
+      onTimeDeliveries: 12,
+      lateDeliveries: 4,
+      violations: 1,
+      breakdowns: 2
+    },
     status: 'OFF_DUTY',
     createdAt: '2024-04-20T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
@@ -208,6 +238,12 @@ export const INITIAL_DRIVERS: Driver[] = [
     licenseExpiry: '2027-02-14',
     contactNumber: '+91 98765 43215',
     safetyScore: 65.4,
+    performance: {
+      onTimeDeliveries: 8,
+      lateDeliveries: 7,
+      violations: 4,
+      breakdowns: 3
+    },
     status: 'SUSPENDED',
     createdAt: '2023-02-15T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'

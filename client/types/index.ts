@@ -35,6 +35,13 @@ export interface Vehicle {
   updatedAt: string;
 }
 
+export interface DriverPerformanceMetrics {
+  onTimeDeliveries: number;
+  lateDeliveries: number;
+  violations: number;
+  breakdowns: number;
+}
+
 export interface Driver {
   id: string;
   name: string;
@@ -43,6 +50,7 @@ export interface Driver {
   licenseExpiry: string;
   contactNumber: string;
   safetyScore: number;
+  performance?: DriverPerformanceMetrics;
   status: DriverStatus;
   createdAt: string;
   updatedAt: string;
