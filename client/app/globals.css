@@ -1,26 +1,142 @@
+/* ─── Google Fonts — must come BEFORE @import "tailwindcss" ──────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap');
+
 @import "tailwindcss";
 
+/* ─── Design Tokens ───────────────────────────────────────────────────────── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-primary:                  #ffc174;
+  --color-on-primary:               #472a00;
+  --color-primary-fixed:            #ffddb8;
+  --color-primary-fixed-dim:        #ffb95f;
+  --color-primary-container:        #f59e0b;
+  --color-on-primary-container:     #613b00;
+  --color-on-primary-fixed:         #2a1700;
+  --color-on-primary-fixed-variant: #653e00;
+  --color-inverse-primary:          #855300;
+
+  --color-secondary:                #adc6ff;
+  --color-on-secondary:             #002e6a;
+  --color-secondary-fixed:          #d8e2ff;
+  --color-secondary-fixed-dim:      #adc6ff;
+  --color-secondary-container:      #0566d9;
+  --color-on-secondary-container:   #e6ecff;
+  --color-on-secondary-fixed:       #001a42;
+  --color-on-secondary-fixed-variant:#004395;
+
+  --color-tertiary:                 #56e5a9;
+  --color-on-tertiary:              #003824;
+  --color-tertiary-fixed:           #6ffbbe;
+  --color-tertiary-fixed-dim:       #4edea3;
+  --color-tertiary-container:       #30c88f;
+  --color-on-tertiary-container:    #004e34;
+  --color-on-tertiary-fixed:        #002113;
+  --color-on-tertiary-fixed-variant:#005236;
+
+  --color-error:                    #ffb4ab;
+  --color-on-error:                 #690005;
+  --color-error-container:          #93000a;
+  --color-on-error-container:       #ffdad6;
+
+  --color-background:               #0b1326;
+  --color-on-background:            #dae2fd;
+  --color-surface:                  #0b1326;
+  --color-on-surface:               #dae2fd;
+  --color-surface-dim:              #0b1326;
+  --color-surface-bright:           #31394d;
+  --color-surface-variant:          #2d3449;
+  --color-on-surface-variant:       #d8c3ad;
+  --color-surface-container-lowest: #060e20;
+  --color-surface-container-low:    #131b2e;
+  --color-surface-container:        #171f33;
+  --color-surface-container-high:   #222a3d;
+  --color-surface-container-highest:#2d3449;
+  --color-surface-tint:             #ffb95f;
+  --color-inverse-surface:          #dae2fd;
+  --color-inverse-on-surface:       #283044;
+
+  --color-outline:                  #a08e7a;
+  --color-outline-variant:          #534434;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* ─── Base ─────────────────────────────────────────────────────────────────── */
+html { background-color: var(--color-background); }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter), sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-on-background);
+  font-family: 'Inter', sans-serif;
 }
+
+/* ─── Utility aliases for the design token colors ─────────────────────────── */
+.bg-surface                  { background-color: var(--color-surface); }
+.bg-surface-container        { background-color: var(--color-surface-container); }
+.bg-surface-container-low    { background-color: var(--color-surface-container-low); }
+.bg-surface-container-high   { background-color: var(--color-surface-container-high); }
+.bg-surface-container-highest{ background-color: var(--color-surface-container-highest); }
+.bg-surface-container-lowest { background-color: var(--color-surface-container-lowest); }
+.bg-surface-variant          { background-color: var(--color-surface-variant); }
+.bg-surface-bright           { background-color: var(--color-surface-bright); }
+.bg-primary                  { background-color: var(--color-primary); }
+.bg-primary-container        { background-color: var(--color-primary-container); }
+.bg-secondary                { background-color: var(--color-secondary); }
+.bg-secondary-container      { background-color: var(--color-secondary-container); }
+.bg-tertiary                 { background-color: var(--color-tertiary); }
+.bg-tertiary-container       { background-color: var(--color-tertiary-container); }
+.bg-tertiary-fixed-dim       { background-color: var(--color-tertiary-fixed-dim); }
+.bg-error                    { background-color: var(--color-error); }
+
+.text-on-surface             { color: var(--color-on-surface); }
+.text-on-surface-variant     { color: var(--color-on-surface-variant); }
+.text-on-primary             { color: var(--color-on-primary); }
+.text-primary                { color: var(--color-primary); }
+.text-secondary              { color: var(--color-secondary); }
+.text-secondary-fixed        { color: var(--color-secondary-fixed); }
+.text-tertiary               { color: var(--color-tertiary); }
+.text-error                  { color: var(--color-error); }
+
+.border-outline-variant      { border-color: var(--color-outline-variant); }
+.border-primary              { border-color: var(--color-primary); }
+
+/* Left-border accent for metric cards */
+.metric-card                 { border-left-width: 4px; }
+.border-l-secondary-container{ border-left-color: var(--color-secondary-container); }
+.border-l-tertiary           { border-left-color: var(--color-tertiary); }
+.border-l-primary-container  { border-left-color: var(--color-primary-container); }
+.border-l-secondary          { border-left-color: var(--color-secondary); }
+.border-l-outline            { border-left-color: var(--color-outline); }
+.border-l-secondary-fixed    { border-left-color: var(--color-secondary-fixed); }
+.border-l-tertiary-fixed-dim { border-left-color: var(--color-tertiary-fixed-dim); }
+
+/* ─── Typography scale ─────────────────────────────────────────────────────── */
+.font-display-lg  { font-family: 'Hanken Grotesk', sans-serif; font-size: 36px; line-height: 44px; letter-spacing: -0.02em; font-weight: 700; }
+.font-headline-md { font-family: 'Hanken Grotesk', sans-serif; font-size: 24px; line-height: 32px; font-weight: 600; }
+.font-title-sm    { font-family: 'Hanken Grotesk', sans-serif; font-size: 18px; line-height: 24px; font-weight: 600; }
+.font-label-caps  { font-family: 'Inter', sans-serif; font-size: 12px; line-height: 16px; letter-spacing: 0.05em; font-weight: 700; }
+.font-body-md     { font-family: 'Inter', sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; }
+.font-body-sm     { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 20px; font-weight: 400; }
+.font-data-mono   { font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 20px; font-weight: 500; }
+
+/* ─── Text size aliases ────────────────────────────────────────────────────── */
+.text-display-lg  { font-size: 36px; line-height: 44px; }
+.text-headline-md { font-size: 24px; line-height: 32px; }
+.text-title-sm    { font-size: 18px; line-height: 24px; }
+.text-label-caps  { font-size: 12px; line-height: 16px; letter-spacing: 0.05em; }
+.text-body-md     { font-size: 16px; line-height: 24px; }
+.text-body-sm     { font-size: 14px; line-height: 20px; }
+.text-data-mono   { font-size: 14px; line-height: 20px; }
+
+/* ─── Spacing aliases ──────────────────────────────────────────────────────── */
+.p-margin_desktop  { padding: 32px; }
+.px-margin_desktop { padding-left: 32px; padding-right: 32px; }
+.px-margin_mobile  { padding-left: 16px; padding-right: 16px; }
+.space-y-stack_lg > * + * { margin-top: 24px; }
+.space-y-stack_md > * + * { margin-top: 16px; }
+.space-x-margin_mobile > * + * { margin-left: 16px; }
+.gap-stack_lg { gap: 24px; }
+.gap-stack_md { gap: 16px; }
+.py-stack_lg  { padding-top: 24px; padding-bottom: 24px; }
+
+/* Sidebar width */
+.w-sidebar { width: 240px; }
+.ml-sidebar { margin-left: 240px; }
