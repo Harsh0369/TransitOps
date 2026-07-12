@@ -35,4 +35,26 @@ export class AuthController {
       next(error);
     }
   }
+
+  static async getMe(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = (req as any).user?.userId;
+      if (!userId) {
+        return res.status(401).json(errorResponse('Unauthenticated'));
+      }
+      
+      const data = await authService.getMe(userId);
+      res.status(200).json(successResponse('Authenticated user fetched successfully', data));
+    } catch (error: any) {
+      if (error.message === 'User not found') {
+        res.status(404).json(errorResponse(error.message));
+        return;
+      }
+      if (error.message === 'Account suspended' || error.message === 'Account is INACTIVE') {
+        res.status(403).json(errorResponse(error.message));
+        return;
+      }
+      next(error);
+    }
+  }
 }

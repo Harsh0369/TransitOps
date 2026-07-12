@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { Role } from '@prisma/client';
 import { AuditService } from './audit.service';
+import { getPermissionsForRole } from '../utils/permissions.util';
 
 export class AuthService {
   private readonly jwtSecret: string;
@@ -76,6 +77,32 @@ export class AuthService {
     return {
       user: userWithoutPassword,
       token,
+    };
+  }
+
+  async getMe(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || user.deletedAt) {
+      throw new Error('User not found');
+    }
+
+    if (user.status === 'SUSPENDED') {
+      throw new Error('Account suspended');
+    }
+
+    if (user.status === 'INACTIVE') {
+      throw new Error('Account is INACTIVE');
+    }
+
+    const { password, deletedAt, ...userWithoutSensitiveData } = user;
+    const permissions = getPermissionsForRole(user.role);
+
+    return {
+      user: userWithoutSensitiveData,
+      permissions
     };
   }
 }
