@@ -4,9 +4,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import authRoute from './routes/auth.route';
-import userRoute from './routes/user.route';
 import vehicleRoute from './routes/vehicle.route';
-import driverRoute from './routes/driver.route';
 import sampleRoute from './routes/sample.route';
 import { globalErrorMiddleware, notFoundMiddleware } from './middlewares/error.middleware';
 
@@ -22,9 +20,7 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/auth', authRoute);
-app.use('/api/users', userRoute);
 app.use('/api/vehicles', vehicleRoute);
-app.use('/api/drivers', driverRoute);
 app.use('/api/sample', sampleRoute);
 
 // Error Handling
