@@ -1,30 +1,32 @@
 'use client';
 
 import React from 'react';
-import { useAppContext } from '../providers/AppProvider';
+import { useExpenses, useFuelLogs } from '../hooks/queries';
 import { Fuel, Wrench, CreditCard, Sparkles } from 'lucide-react';
 
 export const ExpensesView = () => {
-  const { expenses, fuelLogs } = useAppContext();
+  const { data: expenses = [], isLoading: expensesLoading } = useExpenses();
+  const { data: fuelLogs = [], isLoading: fuelLoading } = useFuelLogs();
+  const isLoading = expensesLoading || fuelLoading;
 
   // Combined transactions sorted by date
   const transactions = [
-    ...expenses.map(e => ({
+    ...expenses.map((e: any) => ({
       id: e.id,
-      vehicleName: e.vehicleName,
+      vehicleName: e.vehicle?.name || e.vehicleName,
       type: e.expenseType,
       amount: e.amount,
       description: e.description,
-      date: e.date,
+      date: e.date || e.createdAt,
       category: 'General'
     })),
-    ...fuelLogs.map(f => ({
+    ...fuelLogs.map((f: any) => ({
       id: f.id,
-      vehicleName: f.vehicleName,
+      vehicleName: f.vehicle?.name || f.vehicleName,
       type: 'Fuel Fill',
       amount: f.cost,
       description: `Filled ${f.liters} liters of diesel`,
-      date: f.date,
+      date: f.date || f.createdAt,
       category: 'Fuel'
     }))
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -57,7 +59,7 @@ export const ExpensesView = () => {
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Total Fuel Liters</p>
             <h3 className="text-2xl font-bold text-zinc-900 mt-1">
-              {fuelLogs.reduce((sum, f) => sum + f.liters, 0).toLocaleString()} L
+              {isLoading ? '...' : fuelLogs.reduce((sum: number, f: any) => sum + f.liters, 0).toLocaleString()} L
             </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600">
@@ -69,7 +71,7 @@ export const ExpensesView = () => {
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Total Fuel Cost</p>
             <h3 className="text-2xl font-bold text-zinc-900 mt-1">
-              INR {fuelLogs.reduce((sum, f) => sum + f.cost, 0).toLocaleString()}
+              INR {isLoading ? '...' : fuelLogs.reduce((sum: number, f: any) => sum + f.cost, 0).toLocaleString()}
             </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
@@ -81,7 +83,7 @@ export const ExpensesView = () => {
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Repair & Shop Expenses</p>
             <h3 className="text-2xl font-bold text-zinc-900 mt-1">
-              INR {expenses.filter(e => e.expenseType === 'Maintenance').reduce((sum, e) => sum + e.amount, 0).toLocaleString()}
+              INR {isLoading ? '...' : expenses.filter((e: any) => e.expenseType === 'Maintenance').reduce((sum: number, e: any) => sum + e.amount, 0).toLocaleString()}
             </h3>
           </div>
           <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500">
@@ -98,7 +100,9 @@ export const ExpensesView = () => {
         </div>
 
         <div className="space-y-4">
-          {transactions.map((tx) => (
+          {isLoading ? (
+            <div className="py-12 text-center text-sm text-zinc-400">Loading expenses...</div>
+          ) : transactions.map((tx) => (
             <div
               key={tx.id}
               className="p-4 border border-zinc-100 bg-zinc-50/20 rounded-xl flex items-center justify-between gap-4 hover:border-zinc-200 transition-all"
@@ -129,11 +133,12 @@ export const ExpensesView = () => {
             </div>
           ))}
 
-          {transactions.length === 0 && (
+          {!isLoading && transactions.length === 0 && (
             <div className="py-12 text-center text-sm text-zinc-400">
               No transactions currently logged in ledger.
             </div>
           )}
+          {isLoading && transactions.length > 0 && null /* To satisfy TS/JSX parsing */}
         </div>
       </div>
     </div>

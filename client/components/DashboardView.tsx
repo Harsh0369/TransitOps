@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useDashboardKPIs, useDashboardCharts, useTrips, useVehicles, useDrivers } from '@/hooks/queries';
+import { useDashboardKPIs, useTrips, useVehicles, useDrivers } from '@/hooks/queries';
 import { LoadingSpinner, ErrorState, EmptyState } from '@/components/ui/DataStates';
 import { TripStatus } from '@/types';
 import {
@@ -17,7 +17,7 @@ import {
 
 export const DashboardView = () => {
   const { data: kpis, isLoading: kpisLoading, error: kpisError } = useDashboardKPIs();
-  const { data: charts, isLoading: chartsLoading, error: chartsError } = useDashboardCharts();
+
   const { data: trips = [], isLoading: tripsLoading, error: tripsError } = useTrips();
   const { data: vehicles = [] } = useVehicles();
   const { data: drivers = [] } = useDrivers();
@@ -58,8 +58,8 @@ export const DashboardView = () => {
     );
   };
 
-  if (kpisLoading || chartsLoading) return <LoadingSpinner />;
-  if (kpisError || chartsError) return <ErrorState error={(kpisError || chartsError) as Error} />;
+  if (kpisLoading) return <LoadingSpinner />;
+  if (kpisError) return <ErrorState error={kpisError as Error} />;
 
   const kpiValues = kpis || {
     activeVehicles: 0,
@@ -266,10 +266,10 @@ export const DashboardView = () => {
                       </span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm text-on-surface-variant">{trip.vehicle || '—'}</span>
+                      <span className="text-sm text-on-surface-variant">{trip.vehicle?.name || trip.vehicleName || '—'}</span>
                     </td>
                     <td className="py-4 px-6">
-                      <span className="text-sm text-on-surface-variant">{trip.driver || '—'}</span>
+                      <span className="text-sm text-on-surface-variant">{trip.driver?.name || trip.driverName || '—'}</span>
                     </td>
                     <td className="py-4 px-6">{getStatusBadge(trip.status)}</td>
                     <td className="py-4 px-6">

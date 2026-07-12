@@ -46,7 +46,7 @@ export default function MaintenancePage() {
   const avgTurnaround = maintenance.length > 0 ? Math.round(Math.random() * 10) : 0; // Placeholder
 
   return (
-    <RoleGuard allowedRoles={["Fleet Manager"]}>
+    <RoleGuard allowedRoles={["FLEET_MANAGER"]}>
       <div
         className="p-margin_desktop min-h-[calc(100vh-64px)] overflow-y-auto"
         style={{ backgroundColor: "var(--color-background)" }}

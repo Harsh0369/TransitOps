@@ -1,13 +1,19 @@
 'use client';
 
 import React from 'react';
-import { useAppContext } from '../providers/AppProvider';
+import { useTrips, useDispatchTrip, useCancelTrip, useCompleteTrip } from '../hooks/queries';
 import { TripStatus } from '../types';
 import { Route, CheckCircle, Clock, XCircle, Play, Sparkles } from 'lucide-react';
 
 export const TripsView = () => {
-  const { trips, vehicles, drivers, dispatchTrip, cancelTrip, completeTrip } = useAppContext();
+  const { data: trips = [], isLoading } = useTrips();
+  const { mutate: dispatchTrip } = useDispatchTrip();
+  const { mutate: cancelTrip } = useCancelTrip();
+  const { mutate: completeTrip } = useCompleteTrip();
 
+  if (isLoading) {
+    return <div className="p-8 text-center text-zinc-500">Loading trips...</div>;
+  }
   const getStatusBadge = (status: TripStatus) => {
     switch (status) {
       case 'DISPATCHED':
@@ -74,8 +80,8 @@ export const TripsView = () => {
                   <td className="py-4 px-6 font-semibold text-sm text-zinc-800">{t.id}</td>
                   <td className="py-4 px-6 text-sm text-zinc-700">{t.source}</td>
                   <td className="py-4 px-6 text-sm text-zinc-700">{t.destination}</td>
-                  <td className="py-4 px-6 text-sm text-zinc-600">{t.vehicleName || 'Awaiting'}</td>
-                  <td className="py-4 px-6 text-sm text-zinc-600">{t.driverName || 'Awaiting'}</td>
+                  <td className="py-4 px-6 text-sm text-zinc-600">{t.vehicle?.name || t.vehicleName || 'Awaiting'}</td>
+                  <td className="py-4 px-6 text-sm text-zinc-600">{t.driver?.user?.name || t.driverName || 'Awaiting'}</td>
                   <td className="py-4 px-6 text-sm text-zinc-500 font-medium">{t.cargoWeight} kg</td>
                   <td className="py-4 px-6">{getStatusBadge(t.status)}</td>
                   <td className="py-4 px-6 text-xs text-zinc-400 font-medium">{t.eta}</td>
@@ -96,7 +102,7 @@ export const TripsView = () => {
                           onClick={() => {
                             const reason = prompt('Enter cancellation reason:', 'Awaiting driver');
                             if (reason !== null) {
-                              cancelTrip(t.id, reason);
+                              cancelTrip({ id: t.id, reason });
                             }
                           }}
                           className="px-2.5 py-1 font-semibold text-rose-600 hover:bg-rose-50 border border-rose-100 rounded-lg cursor-pointer"
@@ -112,8 +118,8 @@ export const TripsView = () => {
                           const fuel = prompt('Enter fuel used in liters (optional):', '10');
                           if (odom) {
                             const odomNum = parseFloat(odom);
-                            const fuelNum = fuel ? parseFloat(fuel) : 0;
-                            completeTrip(t.id, odomNum, fuelNum);
+                            const fuelNum = fuel ? parseFloat(fuel) : undefined;
+                            completeTrip({ id: t.id, finalOdometer: odomNum, fuelUsed: fuelNum });
                           }
                         }}
                         className="px-2.5 py-1 font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-lg cursor-pointer"

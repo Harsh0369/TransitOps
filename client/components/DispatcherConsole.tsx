@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../providers/AppProvider';
+import { useVehicles, useDrivers, useTrips, useCreateTrip, useDispatchTrip, useCancelTrip } from '../hooks/queries';
 import { TripStatus } from '../types';
 import {
   FileText,
@@ -18,14 +18,13 @@ import {
 } from 'lucide-react';
 
 export const DispatcherConsole = () => {
-  const {
-    vehicles,
-    drivers,
-    trips,
-    createTrip,
-    dispatchTrip,
-    cancelTrip
-  } = useAppContext();
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useVehicles();
+  const { data: drivers = [], isLoading: driversLoading } = useDrivers();
+  const { data: trips = [], isLoading: tripsLoading } = useTrips();
+  const { mutate: createTrip } = useCreateTrip();
+  const { mutate: dispatchTrip } = useDispatchTrip();
+  const { mutate: cancelTrip } = useCancelTrip();
+  const isLoading = vehiclesLoading || driversLoading || tripsLoading;
 
   // Form State
   const [source, setSource] = useState('Anandnagar Depot');
@@ -39,7 +38,7 @@ export const DispatcherConsole = () => {
   const [step, setStep] = useState<number>(0); // 0: Draft, 1: Dispatched, 2: In-Transit, 3: Completed (visual stepper)
 
   // Document Expiration checks
-  const selectedVehicleObj = vehicles.find(v => v.id === selectedVehicleId);
+  const selectedVehicleObj = vehicles.find((v: any) => v.id === selectedVehicleId);
 
   const checkDocStatus = (expiryDateStr?: string) => {
     if (!expiryDateStr) return { status: 'VALID', text: 'Valid', daysLeft: 999 };
@@ -78,8 +77,8 @@ export const DispatcherConsole = () => {
   const [selectedVehicleCapacity, setSelectedVehicleCapacity] = useState(0);
 
   // Set default values when available
-  const availableVehicles = vehicles.filter(v => v.status === 'AVAILABLE');
-  const availableDrivers = drivers.filter(d => d.status === 'AVAILABLE');
+  const availableVehicles = vehicles.filter((v: any) => v.status === 'AVAILABLE');
+  const availableDrivers = drivers.filter((d: any) => d.status === 'AVAILABLE');
 
   useEffect(() => {
     if (availableVehicles.length > 0 && !selectedVehicleId) {
@@ -95,7 +94,7 @@ export const DispatcherConsole = () => {
 
   // Capacity check effect
   useEffect(() => {
-    const veh = vehicles.find(v => v.id === selectedVehicleId);
+    const veh = vehicles.find((v: any) => v.id === selectedVehicleId);
     if (veh) {
       setSelectedVehicleCapacity(veh.capacity);
       if (cargoWeight > veh.capacity) {
@@ -116,8 +115,8 @@ export const DispatcherConsole = () => {
     e.preventDefault();
     if ((capacityError || hasExpiredDocs) && !isDraft) return; // Block dispatch if capacity exceeded or documents expired
 
-    const veh = vehicles.find(v => v.id === selectedVehicleId);
-    const drv = drivers.find(d => d.id === selectedDriverId);
+    const veh = vehicles.find((v: any) => v.id === selectedVehicleId);
+    const drv = drivers.find((d: any) => d.id === selectedDriverId);
 
     const tripData = {
       source,
@@ -132,16 +131,16 @@ export const DispatcherConsole = () => {
       eta: isDraft ? 'Awaiting dispatch' : '45 min'
     };
 
-    createTrip(tripData);
+    createTrip(tripData as any);
 
     // Reset Form Fields (keep default source/destination)
     if (availableVehicles.length > 1) {
       // Find another available vehicle
-      const otherVeh = availableVehicles.find(v => v.id !== selectedVehicleId);
+      const otherVeh = availableVehicles.find((v: any) => v.id !== selectedVehicleId);
       if (otherVeh) setSelectedVehicleId(otherVeh.id);
     }
     if (availableDrivers.length > 1) {
-      const otherDrv = availableDrivers.find(d => d.id !== selectedDriverId);
+      const otherDrv = availableDrivers.find((d: any) => d.id !== selectedDriverId);
       if (otherDrv) setSelectedDriverId(otherDrv.id);
     }
 
@@ -182,7 +181,7 @@ export const DispatcherConsole = () => {
 
   // Dispatcher live summary text
   const totalResources = vehicles.length + drivers.length;
-  const activeResources = vehicles.filter(v => v.status === 'ON_TRIP').length + drivers.filter(d => d.status === 'ON_TRIP').length;
+  const activeResources = vehicles.filter((v: any) => v.status === 'ON_TRIP').length + drivers.filter((d: any) => d.status === 'ON_TRIP').length;
   const noActionCount = totalResources - activeResources;
 
   return (
@@ -298,11 +297,18 @@ export const DispatcherConsole = () => {
                     onChange={(e) => setSelectedVehicleId(e.target.value)}
                     className="w-full px-3.5 py-2 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 bg-zinc-50/50 cursor-pointer"
                   >
-                    {availableVehicles.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name} ({v.type}) - Max Cap: {v.capacity} kg
-                      </option>
-                    ))}
+                    {isLoading ? (
+                      <option value="">Loading vehicles...</option>
+                    ) : (
+                      <>
+                        <option value="">Select a vehicle...</option>
+                        {availableVehicles.map((v: any) => (
+                          <option key={v.id} value={v.id}>
+                            {v.name} ({v.type}) - Max Cap: {v.capacity} kg
+                          </option>
+                        ))}
+                      </>
+                    )}
                   </select>
                   {selectedVehicleObj && (
                     <div className="grid grid-cols-3 gap-2 mt-2 p-3 bg-zinc-50 rounded-xl border border-zinc-200 text-[10px] font-semibold text-zinc-500">
@@ -356,11 +362,18 @@ export const DispatcherConsole = () => {
                   onChange={(e) => setSelectedDriverId(e.target.value)}
                   className="w-full px-3.5 py-2 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 bg-zinc-50/50 cursor-pointer"
                 >
-                  {availableDrivers.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name} (License: {d.licenseCategory}) - Safety Score: {d.safetyScore}
-                    </option>
-                  ))}
+                  {isLoading ? (
+                    <option value="">Loading drivers...</option>
+                  ) : (
+                    <>
+                      <option value="">Select a driver...</option>
+                      {availableDrivers.map((d: any) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name} (License: {d.licenseCategory}) - Safety Score: {d.safetyScore}
+                        </option>
+                      ))}
+                    </>
+                  )}
                 </select>
               ) : (
                 <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 flex gap-2 items-center">
@@ -525,7 +538,7 @@ export const DispatcherConsole = () => {
 
             {/* List of Trips */}
             <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1">
-              {trips.map((trip) => (
+              {trips.map((trip: any) => (
                 <div
                   key={trip.id}
                   className="p-4 border border-zinc-100 bg-zinc-50/30 rounded-xl flex items-center justify-between gap-4 hover:border-zinc-200 transition-all group"
@@ -576,7 +589,9 @@ export const DispatcherConsole = () => {
                               alert('Please assign a vehicle and driver in edit before dispatching.');
                               return;
                             }
-                            dispatchTrip(trip.id);
+                            if (confirm(`Dispatch Trip ${trip.id} immediately?`)) {
+                              dispatchTrip({ id: trip.id, driverId: trip.driverId, vehicleId: trip.vehicleId });
+                            }
                           }}
                           className="p-1 text-indigo-600 hover:bg-indigo-50 rounded transition-colors cursor-pointer"
                           title="Dispatch Now"
@@ -584,7 +599,7 @@ export const DispatcherConsole = () => {
                           <Play className="w-4 h-4 fill-current" />
                         </button>
                         <button
-                          onClick={() => cancelTrip(trip.id, 'Operator cancelled')}
+                          onClick={() => cancelTrip({ id: trip.id, reason: 'Operator cancelled' })}
                           className="p-1 text-rose-500 hover:bg-rose-50 rounded transition-colors cursor-pointer"
                           title="Cancel Trip"
                         >

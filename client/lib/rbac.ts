@@ -1,7 +1,7 @@
 import { Role } from "@/types/auth";
 
 export const ROLE_PERMISSIONS = {
-  "Fleet Manager": [
+  "FLEET_MANAGER": [
     "vehicles:read",
     "vehicles:create",
     "vehicles:update",
@@ -27,7 +27,7 @@ export const ROLE_PERMISSIONS = {
     "analytics:read",
     "reports:read"
   ],
-  "Dispatcher": [
+  "DRIVER": [
     "vehicles:read",
     "drivers:read",
     "trips:read",
@@ -36,12 +36,12 @@ export const ROLE_PERMISSIONS = {
     "trips:complete",
     "trips:cancel"
   ],
-  "Safety Officer": [
+  "SAFETY_OFFICER": [
     "drivers:read",
     "drivers:updateSafetyScore",
     "drivers:suspend"
   ],
-  "Financial Analyst": [
+  "FINANCIAL_ANALYST": [
     "fuel:read",
     "fuel:create",
     "expenses:read",

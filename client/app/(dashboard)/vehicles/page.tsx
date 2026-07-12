@@ -26,7 +26,7 @@ export default function VehiclesPage() {
   });
 
   return (
-    <RoleGuard allowedRoles={["Fleet Manager", "Dispatcher"]}>
+    <RoleGuard allowedRoles={["FLEET_MANAGER", "DRIVER"]}>
       <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-8">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">

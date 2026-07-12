@@ -17,13 +17,13 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 const getRoleBasedRedirect = (role: string): string => {
   switch (role) {
-    case "Fleet Manager":
+    case "FLEET_MANAGER":
       return "/dashboard";
-    case "Dispatcher":
+    case "DRIVER":
       return "/trips";
-    case "Safety Officer":
+    case "SAFETY_OFFICER":
       return "/drivers";
-    case "Financial Analyst":
+    case "FINANCIAL_ANALYST":
       return "/analytics";
     default:
       return "/dashboard";
@@ -37,16 +37,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("transitops_user");
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
-        console.error("Failed to parse stored user");
-        localStorage.removeItem("transitops_user");
+    const checkAuth = async () => {
+      const token = localStorage.getItem("transitops_token");
+      if (token) {
+        try {
+          const res = await authApi.getMe();
+          if (res.success && res.data) {
+            setUser(res.data);
+            localStorage.setItem("transitops_user", JSON.stringify(res.data));
+          } else {
+            localStorage.removeItem("transitops_token");
+            localStorage.removeItem("transitops_user");
+          }
+        } catch (e) {
+          console.error("Auth check failed:", e);
+          localStorage.removeItem("transitops_token");
+          localStorage.removeItem("transitops_user");
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string) => {

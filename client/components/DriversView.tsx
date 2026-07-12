@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useAppContext } from '../providers/AppProvider';
+import { useDrivers } from '../hooks/queries';
 import { Users, Phone, Award, ShieldAlert, CheckCircle, Clock } from 'lucide-react';
 import { DriverStatus } from '../types';
 
 export const DriversView = () => {
-  const { drivers } = useAppContext();
+  const { data: drivers = [], isLoading } = useDrivers();
 
   const getStatusBadge = (status: DriverStatus) => {
     switch (status) {
@@ -59,10 +59,12 @@ export const DriversView = () => {
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
         <h2 className="text-base font-bold text-zinc-800">Operator Directory</h2>
-        <p className="text-xs text-zinc-400">Total registered operators: {drivers.length} drivers</p>
+        <p className="text-xs text-zinc-400">Total registered operators: {isLoading ? '...' : drivers.length} drivers</p>
       </div>
 
-      {/* Grid listing */}
+      {isLoading ? (
+        <div className="p-8 text-center text-zinc-500">Loading drivers...</div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {drivers.map((drv) => (
           <div key={drv.id} className="bg-white border border-zinc-100 hover:border-zinc-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between group hover:shadow-md transition-all duration-200">
@@ -70,10 +72,10 @@ export const DriversView = () => {
               <div className="flex items-start justify-between">
                 <div className="flex gap-3">
                   <div className="w-11 h-11 rounded-xl bg-zinc-50 border border-zinc-200 flex items-center justify-center font-bold text-zinc-600 shadow-sm group-hover:scale-105 transition-transform">
-                    {drv.name.split(' ').map(n => n[0]).join('')}
+                    {drv.user?.name ? drv.user.name.split(' ').map((n: string) => n[0]).join('') : '?'}
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-zinc-800">{drv.name}</h3>
+                    <h3 className="text-sm font-bold text-zinc-800">{drv.user?.name || 'Unknown'}</h3>
                     <p className="text-[10px] text-zinc-400 font-medium tracking-wide">License: {drv.licenseCategory} ({drv.licenseNumber})</p>
                   </div>
                 </div>
@@ -111,6 +113,7 @@ export const DriversView = () => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };

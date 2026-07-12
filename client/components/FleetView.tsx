@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAppContext } from '../providers/AppProvider';
+import { useVehicles, useCreateMaintenance } from '../hooks/queries';
 import { Truck, Wrench, ShieldAlert, BadgeInfo, CheckCircle } from 'lucide-react';
 import { VehicleStatus } from '../types';
 
 export const FleetView = () => {
-  const { vehicles, sendToMaintenance } = useAppContext();
+  const { data: vehicles = [], isLoading } = useVehicles();
+  const { mutate: createMaintenance } = useCreateMaintenance();
   const [maintenanceType, setMaintenanceType] = useState('Routine Inspection');
   const [maintenanceDesc, setMaintenanceDesc] = useState('');
   const [selectedVehicleId, setSelectedVehicleId] = useState('');
@@ -84,7 +85,7 @@ export const FleetView = () => {
     e.preventDefault();
     if (!selectedVehicleId) return;
 
-    sendToMaintenance(selectedVehicleId, maintenanceType, maintenanceDesc);
+    createMaintenance({ vehicleId: selectedVehicleId, maintenanceType, description: maintenanceDesc });
     setIsMaintModalOpen(false);
     setMaintenanceDesc('');
     alert('Vehicle sent to maintenance shop.');
@@ -96,11 +97,11 @@ export const FleetView = () => {
       <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
         <div>
           <h2 className="text-base font-bold text-zinc-800">Fleet Inventory</h2>
-          <p className="text-xs text-zinc-400">Total active assets: {vehicles.filter(v => v.status !== 'RETIRED').length} vehicles</p>
+          <p className="text-xs text-zinc-400">Total active assets: {isLoading ? '...' : vehicles.filter((v: any) => v.status !== 'RETIRED').length} vehicles</p>
         </div>
         <button
           onClick={() => {
-            const avail = vehicles.filter(v => v.status === 'AVAILABLE');
+            const avail = vehicles.filter((v: any) => v.status === 'AVAILABLE');
             if (avail.length === 0) {
               alert('No available vehicles to send to shop!');
               return;
@@ -133,7 +134,9 @@ export const FleetView = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {vehicles.map((v) => (
+              {isLoading ? (
+                <tr><td colSpan={9} className="py-4 text-center text-zinc-500">Loading...</td></tr>
+              ) : vehicles.map((v: any) => (
                 <tr key={v.id} className="hover:bg-zinc-50/50 transition-colors group">
                   <td className="py-4 px-6 font-semibold text-sm text-zinc-800">{v.registrationNumber}</td>
                   <td className="py-4 px-6 text-sm text-zinc-700">{v.name}</td>
@@ -192,8 +195,8 @@ export const FleetView = () => {
                   className="w-full px-3.5 py-2 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 bg-zinc-50 cursor-pointer"
                 >
                   {vehicles
-                    .filter((v) => v.status === 'AVAILABLE')
-                    .map((v) => (
+                    .filter((v: any) => v.status === 'AVAILABLE')
+                    .map((v: any) => (
                       <option key={v.id} value={v.id}>
                         {v.name} ({v.registrationNumber})
                       </option>

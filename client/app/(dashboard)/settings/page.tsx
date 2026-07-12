@@ -2,7 +2,7 @@ import { RoleGuard } from "@/components/auth/RoleGuard";
 
 export default function SettingsPage() {
   return (
-    <RoleGuard allowedRoles={["Fleet Manager"]}>
+    <RoleGuard allowedRoles={["FLEET_MANAGER"]}>
       <div className="flex flex-col gap-6">
         <h1 className="text-3xl font-bold text-white">Settings</h1>
         <div className="p-6 bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400">
