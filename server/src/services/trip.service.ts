@@ -1,14 +1,32 @@
 import { prisma } from '../lib/prisma';
 import { TripStatus, VehicleStatus, DriverStatus } from '@prisma/client';
 import { AuditService } from './audit.service';
+import { QueryOptions } from '../utils/query.util';
 
 export class TripService {
-  async getAllTrips() {
-    return prisma.trip.findMany({
-      where: { deletedAt: null },
-      include: { driver: { include: { user: true } }, vehicle: true },
-      orderBy: { createdAt: 'desc' }
-    });
+  async getAll(options?: QueryOptions) {
+    const where = { deletedAt: null };
+    
+    if (options && options.exportData) {
+      return prisma.trip.findMany({ 
+        where, 
+        include: { driver: { include: { user: true } }, vehicle: true }, 
+        orderBy: { [options.sortBy]: options.sortOrder } 
+      });
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.trip.findMany({
+        where,
+        include: { driver: { include: { user: true } }, vehicle: true },
+        skip: options ? options.skip : 0,
+        take: options ? options.limit : 100,
+        orderBy: options ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' }
+      }),
+      prisma.trip.count({ where })
+    ]);
+    
+    return { data, total };
   }
 
   async getTripsForDriver(userId: string) {

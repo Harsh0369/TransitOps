@@ -1,14 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
 import { TripService } from '../services/trip.service';
 import { successResponse, errorResponse } from '../utils/response.util';
+import { QueryUtil } from '../utils/query.util';
+import { CsvUtil } from '../utils/csv.util';
 
 const tripService = new TripService();
 
 export class TripController {
   static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const trips = await tripService.getAllTrips();
-      res.status(200).json(successResponse('Trips retrieved successfully', trips));
+      const options = QueryUtil.parse(req, 'createdAt');
+      const result = await tripService.getAll(options);
+
+      if (options.exportData) {
+        res.header('Content-Type', 'text/csv');
+        res.attachment('trips.csv');
+        return res.send(CsvUtil.jsonToCsv(result as any[]));
+      }
+
+      const { data, total } = result as { data: any[], total: number };
+      res.status(200).json(successResponse('Trips retrieved successfully', data, QueryUtil.getPaginationMeta(total, options)));
     } catch (error) {
       next(error);
     }

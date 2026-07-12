@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { DriverService } from '../services/driver.service';
 import { successResponse, errorResponse } from '../utils/response.util';
+import { QueryUtil } from '../utils/query.util';
+import { CsvUtil } from '../utils/csv.util';
 
 const driverService = new DriverService();
 
@@ -8,8 +10,17 @@ export class DriverController {
   
   static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const drivers = await driverService.getAllDrivers();
-      res.status(200).json(successResponse('Drivers retrieved successfully', drivers));
+      const options = QueryUtil.parse(req, 'createdAt');
+      const result = await driverService.getAll(options);
+
+      if (options.exportData) {
+        res.header('Content-Type', 'text/csv');
+        res.attachment('drivers.csv');
+        return res.send(CsvUtil.jsonToCsv(result as any[]));
+      }
+
+      const { data, total } = result as { data: any[], total: number };
+      res.status(200).json(successResponse('Drivers retrieved successfully', data, QueryUtil.getPaginationMeta(total, options)));
     } catch (error) {
       next(error);
     }

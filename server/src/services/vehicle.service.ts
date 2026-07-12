@@ -1,8 +1,11 @@
 import { prisma } from '../lib/prisma';
 import { VehicleStatus } from '@prisma/client';
 import { AuditService } from './audit.service';
+import { QueryOptions } from '../utils/query.util';
 
 export class VehicleService {
+// Removed duplicate getAll
+
   private computeComplianceStatus(compliance: any, now: number) {
     if (!compliance) return 'MISSING';
     const expiry = new Date(compliance.expiryDate).getTime();
@@ -48,19 +51,17 @@ export class VehicleService {
     };
   }
 
-  async getAllVehicles(filters?: { roadworthy?: boolean, complianceStatus?: Record<string, string> }) {
+  async getAllVehicles(filters?: QueryOptions & { roadworthy?: boolean, complianceStatus?: Record<string, string> }) {
     const where: any = { deletedAt: null };
 
     if (filters?.roadworthy !== undefined) {
       const now = new Date();
       if (filters.roadworthy) {
-        // Needs to not be RETIRED or IN_SHOP, and all 4 compliances must have expiryDate > now
         where.status = { notIn: ['RETIRED', 'IN_SHOP'] };
         where.AND = ['INSURANCE', 'PUC', 'FITNESS', 'REGISTRATION'].map(type => ({
           compliances: { some: { type, expiryDate: { gt: now } } }
         }));
       } else {
-        // Unfit: either RETIRED, IN_SHOP, or missing/expired any of the 4
         where.OR = [
           { status: { in: ['RETIRED', 'IN_SHOP'] } },
           { compliances: { none: { type: 'INSURANCE' } } },
@@ -72,14 +73,17 @@ export class VehicleService {
       }
     }
 
-    const vehicles = await prisma.vehicle.findMany({
-      where,
-      include: { compliances: true },
-      orderBy: { createdAt: 'desc' }
-    });
+    const [vehicles, total] = await Promise.all([
+      prisma.vehicle.findMany({
+        where,
+        include: { compliances: true },
+        skip: (filters && !filters.exportData) ? filters.skip : undefined,
+        take: (filters && !filters.exportData) ? filters.limit : undefined,
+        orderBy: filters ? { [filters.sortBy]: filters.sortOrder } : { createdAt: 'desc' }
+      }),
+      prisma.vehicle.count({ where })
+    ]);
 
-    // We can also do application-level filtering for specific compliance statuses (EXPIRING_SOON) 
-    // since the logic is complex for Prisma
     let mapped = vehicles.map(v => this.mapVehicleWithCompliance(v));
 
     if (filters?.complianceStatus) {
@@ -91,7 +95,9 @@ export class VehicleService {
       });
     }
 
-    return mapped;
+    if (filters && filters.exportData) return mapped;
+
+    return { data: mapped, total };
   }
 
   async getVehicleById(id: string) {
@@ -104,7 +110,8 @@ export class VehicleService {
   }
 
   async getComplianceDashboard() {
-    const vehicles = await this.getAllVehicles();
+    const result = await this.getAllVehicles();
+    const vehicles = Array.isArray(result) ? result : result.data;
     
     let expiredInsurance = 0;
     let expiredFitness = 0;
