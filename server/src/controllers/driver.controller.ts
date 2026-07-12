@@ -97,4 +97,13 @@ export class DriverController {
       next(error);
     }
   }
+
+  static async getTimeline(req: Request, res: Response, next: NextFunction) {
+    try {
+      const timeline = await driverService.getTimeline(req.params.id as string);
+      res.status(200).json(successResponse('Timeline retrieved successfully', timeline));
+    } catch (error) {
+      next(error);
+    }
+  }
 }

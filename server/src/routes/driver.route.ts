@@ -26,6 +26,7 @@ router.patch('/:id/renew', authorize(['SAFETY_OFFICER', 'ADMIN']), validate(rene
 
 // View access (Fleet Managers, Safety Officers, Admins)
 router.get('/', authorize(['FLEET_MANAGER', 'SAFETY_OFFICER', 'ADMIN']), DriverController.getAll);
+router.get('/:id/timeline', authorize(['FLEET_MANAGER', 'SAFETY_OFFICER', 'ADMIN']), DriverController.getTimeline);
 router.get('/:id', authorize(['FLEET_MANAGER', 'SAFETY_OFFICER', 'ADMIN']), DriverController.getById);
 
 export default router;

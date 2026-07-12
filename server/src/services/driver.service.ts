@@ -94,4 +94,25 @@ export class DriverService {
     AuditService.log('DRIVER_LICENSE_RENEWED', 'Driver', id, userId, { licenseExpiry });
     return updated;
   }
+
+  async getTimeline(id: string) {
+    const auditLogs = await prisma.auditLog.findMany({
+      where: { entity: 'Driver', entityId: id },
+      orderBy: { timestamp: 'desc' },
+      include: { user: { select: { name: true, email: true } } }
+    });
+
+    const trips = await prisma.trip.findMany({
+      where: { driverId: id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const timeline = [
+      ...auditLogs.map(a => ({ type: 'AUDIT', timestamp: a.timestamp, data: a })),
+      ...trips.map(t => ({ type: 'TRIP', timestamp: t.createdAt, data: t }))
+    ];
+
+    timeline.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return timeline;
+  }
 }

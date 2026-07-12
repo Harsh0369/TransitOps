@@ -94,4 +94,89 @@ export class NotificationService {
       console.error('Error during compliance check:', error);
     }
   }
+
+  static async getDynamicNotifications() {
+    const notifications = [];
+    const now = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(now.getDate() + 30);
+
+    // 1. Expiring Compliances
+    const compliances = await prisma.vehicleCompliance.findMany({
+      where: { expiryDate: { lte: thirtyDaysFromNow } },
+      include: { vehicle: true }
+    });
+
+    for (const c of compliances) {
+      const daysLeft = Math.ceil((c.expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysLeft < 0) {
+        notifications.push({
+          type: 'ERROR',
+          message: `${c.type} for ${c.vehicle.registrationNumber} expired ${Math.abs(daysLeft)} days ago`,
+          entity: 'Vehicle',
+          entityId: c.vehicleId
+        });
+      } else {
+        notifications.push({
+          type: 'WARNING',
+          message: `${c.type} for ${c.vehicle.registrationNumber} expires in ${daysLeft} days`,
+          entity: 'Vehicle',
+          entityId: c.vehicleId
+        });
+      }
+    }
+
+    // 2. Driver Licenses
+    const drivers = await prisma.driver.findMany({
+      where: { licenseExpiry: { lte: thirtyDaysFromNow }, deletedAt: null }
+    });
+
+    for (const d of drivers) {
+      const daysLeft = Math.ceil((d.licenseExpiry.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysLeft < 0) {
+        notifications.push({
+          type: 'ERROR',
+          message: `Driver license for ${d.name} expired ${Math.abs(daysLeft)} days ago`,
+          entity: 'Driver',
+          entityId: d.id
+        });
+      } else {
+        notifications.push({
+          type: 'WARNING',
+          message: `Driver license for ${d.name} expires in ${daysLeft} days`,
+          entity: 'Driver',
+          entityId: d.id
+        });
+      }
+    }
+
+    // 3. Trips Awaiting Approval
+    const trips = await prisma.trip.findMany({
+      where: { status: 'PENDING_APPROVAL', deletedAt: null }
+    });
+    for (const t of trips) {
+      notifications.push({
+        type: 'INFO',
+        message: `Trip from ${t.source} to ${t.destination} is awaiting approval`,
+        entity: 'Trip',
+        entityId: t.id
+      });
+    }
+
+    // 4. Vehicles in Maintenance
+    const maintenance = await prisma.maintenance.findMany({
+      where: { status: 'OPEN', deletedAt: null },
+      include: { vehicle: true }
+    });
+    for (const m of maintenance) {
+      notifications.push({
+        type: 'INFO',
+        message: `Vehicle ${m.vehicle.registrationNumber} is in maintenance`,
+        entity: 'Vehicle',
+        entityId: m.vehicleId
+      });
+    }
+
+    return notifications;
+  }
 }

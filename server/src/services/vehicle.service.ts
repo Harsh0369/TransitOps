@@ -221,4 +221,25 @@ export class VehicleService {
     AuditService.log('VEHICLE_STATUS_CHANGED', 'Vehicle', id, userId, { status });
     return updated;
   }
+
+  async getTimeline(id: string) {
+    const auditLogs = await prisma.auditLog.findMany({
+      where: { entity: 'Vehicle', entityId: id },
+      orderBy: { timestamp: 'desc' },
+      include: { user: { select: { name: true, email: true } } }
+    });
+
+    const statusHistory = await prisma.vehicleStatusHistory.findMany({
+      where: { vehicleId: id },
+      orderBy: { changedAt: 'desc' }
+    });
+
+    const timeline = [
+      ...auditLogs.map(a => ({ type: 'AUDIT', timestamp: a.timestamp, data: a })),
+      ...statusHistory.map(s => ({ type: 'STATUS_CHANGE', timestamp: s.changedAt, data: s }))
+    ];
+
+    timeline.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    return timeline;
+  }
 }
