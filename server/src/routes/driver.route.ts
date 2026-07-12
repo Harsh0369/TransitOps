@@ -5,7 +5,9 @@ import { authenticate, authorize } from '../middlewares/auth.middleware';
 import { 
   createDriverSchema, 
   updateDriverSchema, 
-  updateDriverStatusSchema 
+  updateDriverStatusSchema,
+  updateSafetyScoreSchema,
+  renewLicenseSchema
 } from '../validators/driver.validator';
 
 const router = Router();
@@ -17,8 +19,10 @@ router.use(authenticate);
 router.post('/', authorize(['FLEET_MANAGER', 'ADMIN', 'DRIVER']), validate(createDriverSchema), DriverController.create);
 router.patch('/:id', authorize(['FLEET_MANAGER', 'ADMIN']), validate(updateDriverSchema), DriverController.update);
 
-// Safety Officers (and Admins) manage suspension / status
+// Safety Officers (and Admins) manage suspension / status and compliance
 router.patch('/:id/status', authorize(['SAFETY_OFFICER', 'ADMIN']), validate(updateDriverStatusSchema), DriverController.updateStatus);
+router.patch('/:id/score', authorize(['SAFETY_OFFICER', 'ADMIN']), validate(updateSafetyScoreSchema), DriverController.updateSafetyScore);
+router.patch('/:id/renew', authorize(['SAFETY_OFFICER', 'ADMIN']), validate(renewLicenseSchema), DriverController.renewLicense);
 
 // View access (Fleet Managers, Safety Officers, Admins)
 router.get('/', authorize(['FLEET_MANAGER', 'SAFETY_OFFICER', 'ADMIN']), DriverController.getAll);

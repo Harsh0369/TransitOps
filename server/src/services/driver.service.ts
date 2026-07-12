@@ -1,10 +1,12 @@
 import { prisma } from '../lib/prisma';
 import { DriverStatus } from '@prisma/client';
+import { AuditService } from './audit.service';
 
 export class DriverService {
   async getAllDrivers() {
     return prisma.driver.findMany({
-      include: { user: { select: { email: true, role: true } } },
+      where: { deletedAt: null },
+      include: { user: { select: { name: true, email: true, phoneNumber: true } } },
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -50,20 +52,32 @@ export class DriverService {
       driverData.userId = targetUserId;
     }
     
-    return prisma.driver.create({ data: driverData });
+    const newDriver = await prisma.driver.create({ data: driverData });
+    AuditService.log('DRIVER_CREATED', 'Driver', newDriver.id, undefined, { licenseNumber: newDriver.licenseNumber });
+    return newDriver;
   }
 
   async updateDriver(id: string, data: any) {
-    return prisma.driver.update({
-      where: { id },
-      data
-    });
+    const updated = await prisma.driver.update({ where: { id }, data });
+    AuditService.log('DRIVER_UPDATED', 'Driver', id, undefined, { updatedFields: Object.keys(data) });
+    return updated;
   }
 
-  async updateStatus(id: string, status: DriverStatus) {
-    return prisma.driver.update({
-      where: { id },
-      data: { status }
-    });
+  async updateStatus(id: string, status: DriverStatus, userId: string) {
+    const updated = await prisma.driver.update({ where: { id }, data: { status } });
+    AuditService.log('DRIVER_STATUS_CHANGED', 'Driver', id, userId, { status });
+    return updated;
+  }
+
+  async updateSafetyScore(id: string, safetyScore: number, userId: string) {
+    const updated = await prisma.driver.update({ where: { id }, data: { safetyScore } });
+    AuditService.log('DRIVER_SAFETY_SCORE_UPDATED', 'Driver', id, userId, { safetyScore });
+    return updated;
+  }
+
+  async renewLicense(id: string, licenseExpiry: Date, userId: string) {
+    const updated = await prisma.driver.update({ where: { id }, data: { licenseExpiry } });
+    AuditService.log('DRIVER_LICENSE_RENEWED', 'Driver', id, userId, { licenseExpiry });
+    return updated;
   }
 }

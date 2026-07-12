@@ -16,6 +16,12 @@ enum Role {
   FINANCIAL_ANALYST
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
 enum VehicleStatus {
   AVAILABLE
   ON_TRIP
@@ -33,6 +39,7 @@ enum DriverStatus {
 enum TripStatus {
   DRAFT
   DISPATCHED
+  PENDING_APPROVAL
   COMPLETED
   CANCELLED
 }
@@ -48,9 +55,11 @@ model User {
   email       String   @unique
   phoneNumber String?  @unique
   password    String
-  role      Role     @default(FLEET_MANAGER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role        Role       @default(FLEET_MANAGER)
+  status      UserStatus @default(ACTIVE)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  deletedAt   DateTime?
 
   drivers   Driver[]
   trips     Trip[]     @relation("UserTrips")
@@ -69,11 +78,13 @@ model Vehicle {
   status             VehicleStatus @default(AVAILABLE)
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
+  deletedAt          DateTime?
 
-  trips       Trip[]
-  maintenance Maintenance[]
-  fuelLogs    FuelLog[]
-  expenses    Expense[]
+  trips         Trip[]
+  maintenance   Maintenance[]
+  fuelLogs      FuelLog[]
+  expenses      Expense[]
+  statusHistory VehicleStatusHistory[]
 }
 
 model Driver {
@@ -88,6 +99,7 @@ model Driver {
   status          DriverStatus @default(AVAILABLE)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
 
   user  User?  @relation(fields: [userId], references: [id])
   trips Trip[]
@@ -104,11 +116,16 @@ model Trip {
   distance        Float?
   dispatchDate    DateTime?
   completionDate  DateTime?
+  completionNotes String?
   finalOdometer   Float?
   fuelUsed        Float?
   status          TripStatus @default(DRAFT)
+  rejectionReason String?
+  rejectedBy      String?
+  rejectedAt      DateTime?
   createdAt       DateTime   @default(now())
   updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
 
   driver            Driver              @relation(fields: [driverId], references: [id])
   vehicle           Vehicle             @relation(fields: [vehicleId], references: [id])
@@ -128,6 +145,7 @@ model Maintenance {
   endDate         DateTime?
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id])
 }
@@ -141,6 +159,7 @@ model FuelLog {
   date      DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  deletedAt DateTime?
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id])
   trip    Trip?   @relation(fields: [tripId], references: [id])
@@ -155,17 +174,33 @@ model Expense {
   date        DateTime @default(now())
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id])
 }
 
 model TripStatusHistory {
-  id        String     @id @default(uuid())
-  tripId    String
-  status    TripStatus
-  timestamp DateTime   @default(now())
+  id             String     @id @default(uuid())
+  tripId         String
+  previousStatus TripStatus?
+  status         TripStatus
+  changedBy      String?
+  remarks        String?
+  timestamp      DateTime   @default(now())
 
   trip Trip @relation(fields: [tripId], references: [id])
+}
+
+model VehicleStatusHistory {
+  id        String        @id @default(uuid())
+  vehicleId String
+  oldStatus VehicleStatus?
+  newStatus VehicleStatus
+  changedBy String?
+  remarks   String?
+  changedAt DateTime      @default(now())
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
 }
 
 model AuditLog {
@@ -173,6 +208,11 @@ model AuditLog {
   action    String
   entity    String
   entityId  String
+  oldValue  Json?
+  newValue  Json?
+  metadata  Json?
+  reason    String?
+  ipAddress String?
   userId    String?
   timestamp DateTime @default(now())
 

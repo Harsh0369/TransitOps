@@ -18,5 +18,9 @@ export const updateDriverStatusSchema = z.object({
 });
 
 export const updateSafetyScoreSchema = z.object({
-  safetyScore: z.number().min(0).max(100),
+  safetyScore: z.number().min(0).max(100, 'Score must be between 0 and 100'),
+});
+
+export const renewLicenseSchema = z.object({
+  licenseExpiry: z.string().datetime({ message: 'Invalid ISO datetime string' }),
 });

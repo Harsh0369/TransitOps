@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { Role } from '@prisma/client';
+import { AuditService } from './audit.service';
 
 export class AuthService {
   private readonly jwtSecret: string;
@@ -39,6 +40,8 @@ export class AuthService {
       },
     });
 
+    await AuditService.log('USER_REGISTERED', 'User', newUser.id, newUser.id, { role: assignedRole });
+
     // Exclude password from the returned object
     const { password, ...userWithoutPassword } = newUser;
     return userWithoutPassword;
@@ -50,7 +53,15 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new Error('Invalid email or password');
+    }
+
+    if (user.status !== 'ACTIVE') {
+      throw new Error(`Account is ${user.status}. Please contact the Fleet Manager.`);
+    }
+
+    if (user.deletedAt) {
+      throw new Error('Account has been deleted');
     }
 
     const isPasswordValid = await bcrypt.compare(passwordRaw, user.password);
