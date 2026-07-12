@@ -28,6 +28,9 @@ export interface Vehicle {
   acquisitionCost: number;
   status: VehicleStatus;
   region?: string;
+  insuranceExpiry?: string;
+  fitnessExpiry?: string;
+  pollutionExpiry?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -44,6 +44,42 @@ export const FleetView = () => {
     }
   };
 
+  const checkDocStatus = (expiryDateStr?: string) => {
+    if (!expiryDateStr) return { status: 'VALID', text: 'Valid' };
+    const today = new Date('2026-07-12T00:00:00Z');
+    const expiry = new Date(expiryDateStr);
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return { status: 'EXPIRED', text: 'Expired' };
+    } else if (diffDays <= 30) {
+      return { status: 'EXPIRING_SOON', text: 'Expiring Soon' };
+    } else {
+      return { status: 'VALID', text: 'Valid' };
+    }
+  };
+
+  const getDocBadge = (type: string, date?: string) => {
+    if (!date) return <span className="text-[10px] text-zinc-400 font-medium">{type}: N/A</span>;
+    const { status } = checkDocStatus(date);
+    
+    let colorClass = '';
+    if (status === 'EXPIRED') {
+      colorClass = 'bg-rose-50 text-rose-700 border-rose-100 font-bold';
+    } else if (status === 'EXPIRING_SOON') {
+      colorClass = 'bg-amber-50 text-amber-700 border-amber-100 font-semibold animate-pulse';
+    } else {
+      colorClass = 'bg-emerald-50 text-emerald-700 border-emerald-100';
+    }
+    
+    return (
+      <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] border font-medium ${colorClass}`} title={`${type} expiry: ${date}`}>
+        {type}: {date}
+      </span>
+    );
+  };
+
   const handleMaintenanceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedVehicleId) return;
@@ -87,11 +123,11 @@ export const FleetView = () => {
               <tr className="border-b border-zinc-100 bg-zinc-50/50">
                 <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Reg Number</th>
                 <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Asset Name</th>
-                <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Model</th>
-                <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Type</th>
+                <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Model / Type</th>
                 <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Capacity</th>
                 <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Odometer (km)</th>
                 <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Status</th>
+                <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Legal Documents</th>
                 <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider">Region</th>
                 <th className="py-3 px-6 text-xs font-bold text-zinc-400 uppercase tracking-wider text-right">Actions</th>
               </tr>
@@ -101,11 +137,20 @@ export const FleetView = () => {
                 <tr key={v.id} className="hover:bg-zinc-50/50 transition-colors group">
                   <td className="py-4 px-6 font-semibold text-sm text-zinc-800">{v.registrationNumber}</td>
                   <td className="py-4 px-6 text-sm text-zinc-700">{v.name}</td>
-                  <td className="py-4 px-6 text-sm text-zinc-500">{v.model}</td>
-                  <td className="py-4 px-6 text-sm text-zinc-600">{v.type}</td>
+                  <td className="py-4 px-6">
+                    <span className="text-sm text-zinc-700 block font-medium">{v.model}</span>
+                    <span className="text-[10px] text-zinc-400 font-medium">{v.type}</span>
+                  </td>
                   <td className="py-4 px-6 text-sm text-zinc-600">{v.capacity.toLocaleString()} kg</td>
                   <td className="py-4 px-6 text-sm text-zinc-600">{v.odometer.toLocaleString()} km</td>
                   <td className="py-4 px-6">{getStatusBadge(v.status)}</td>
+                  <td className="py-4 px-6">
+                    <div className="flex flex-col gap-1">
+                      {getDocBadge('INS', v.insuranceExpiry)}
+                      {getDocBadge('FIT', v.fitnessExpiry)}
+                      {getDocBadge('PUC', v.pollutionExpiry)}
+                    </div>
+                  </td>
                   <td className="py-4 px-6 text-sm text-zinc-500">{v.region || '—'}</td>
                   <td className="py-4 px-6 text-right text-xs">
                     {v.status === 'AVAILABLE' ? (

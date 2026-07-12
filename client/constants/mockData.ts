@@ -12,6 +12,9 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     acquisitionCost: 12000,
     status: 'ON_TRIP',
     region: 'West',
+    insuranceExpiry: '2027-02-15',
+    fitnessExpiry: '2026-12-01',
+    pollutionExpiry: '2026-09-10',
     createdAt: '2025-01-10T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
   },
@@ -26,6 +29,9 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     acquisitionCost: 45000,
     status: 'AVAILABLE',
     region: 'North',
+    insuranceExpiry: '2027-05-20',
+    fitnessExpiry: '2027-03-15',
+    pollutionExpiry: '2026-06-30', // EXPIRED (pollution)
     createdAt: '2024-05-15T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
   },
@@ -40,6 +46,9 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     acquisitionCost: 22000,
     status: 'ON_TRIP',
     region: 'East',
+    insuranceExpiry: '2026-12-30',
+    fitnessExpiry: '2027-02-05',
+    pollutionExpiry: '2026-11-20',
     createdAt: '2024-11-20T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
   },
@@ -54,6 +63,9 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     acquisitionCost: 28000,
     status: 'IN_SHOP',
     region: 'South',
+    insuranceExpiry: '2027-01-10',
+    fitnessExpiry: '2026-10-15',
+    pollutionExpiry: '2026-08-05',
     createdAt: '2024-08-05T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
   },
@@ -68,6 +80,9 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     acquisitionCost: 8500,
     status: 'AVAILABLE',
     region: 'West',
+    insuranceExpiry: '2026-06-15', // EXPIRED (insurance)
+    fitnessExpiry: '2027-01-10',
+    pollutionExpiry: '2026-10-18',
     createdAt: '2025-03-22T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
   },
@@ -82,6 +97,9 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     acquisitionCost: 24000,
     status: 'RETIRED',
     region: 'East',
+    insuranceExpiry: '2025-12-01',
+    fitnessExpiry: '2025-08-15',
+    pollutionExpiry: '2025-09-01',
     createdAt: '2023-01-15T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
   },
@@ -96,6 +114,9 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     acquisitionCost: 15000,
     status: 'AVAILABLE',
     region: 'South',
+    insuranceExpiry: '2027-08-01',
+    fitnessExpiry: '2026-07-25', // EXPIRING SOON
+    pollutionExpiry: '2027-02-01',
     createdAt: '2024-12-01T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
   },
@@ -110,6 +131,9 @@ export const INITIAL_VEHICLES: Vehicle[] = [
     acquisitionCost: 5500,
     status: 'AVAILABLE',
     region: 'West',
+    insuranceExpiry: '2026-11-12',
+    fitnessExpiry: '2027-04-18',
+    pollutionExpiry: '2026-12-30',
     createdAt: '2025-06-10T10:00:00Z',
     updatedAt: '2026-07-12T08:00:00Z'
   }
