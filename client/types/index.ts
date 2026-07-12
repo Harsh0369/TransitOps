@@ -102,3 +102,23 @@ export interface Expense {
   description: string;
   date: string;
 }
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  entity: string;
+  entityId: string;
+  oldValue?: any;
+  newValue?: any;
+  metadata?: any;
+  reason?: string;
+  ipAddress?: string;
+  userId?: string;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+  };
+  timestamp: string;
+}

@@ -16,7 +16,8 @@ import {
   Settings,
   ShieldAlert,
   FileCheck2,
-  Activity
+  Activity,
+  ScrollText
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -30,6 +31,7 @@ const navConfig: NavItem[] = [
   { name: "Expenses", href: "/expenses", icon: "DollarSign", roles: ["Financial Analyst"] },
   { name: "Analytics", href: "/analytics", icon: "PieChart", roles: ["Financial Analyst"] },
   { name: "Reports", href: "/reports", icon: "FileCheck2", roles: ["Fleet Manager", "Financial Analyst"] },
+  { name: "Audit Logs", href: "/audit-logs", icon: "ScrollText", roles: ["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"] },
   { name: "Settings", href: "/settings", icon: "Settings", roles: ["Fleet Manager"] },
   { name: "Compliance", href: "/compliance", icon: "ShieldAlert", roles: ["Safety Officer"] },
   { name: "License Expiry", href: "/license-expiry", icon: "FileCheck2", roles: ["Safety Officer"] },
@@ -37,7 +39,7 @@ const navConfig: NavItem[] = [
 ];
 
 const icons: Record<string, React.ElementType> = {
-  LayoutDashboard, Truck, Users, Route, Wrench, Droplet, DollarSign, PieChart, Settings, ShieldAlert, FileCheck2, Activity
+  LayoutDashboard, Truck, Users, Route, Wrench, Droplet, DollarSign, PieChart, Settings, ShieldAlert, FileCheck2, Activity, ScrollText
 };
 
 export function Sidebar() {

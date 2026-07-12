@@ -13,6 +13,7 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from '@/providers/AuthProvider';
+import { AppProvider } from '@/providers/AppProvider';
 
 export default function RootLayout({
   children,
@@ -24,7 +25,13 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} h-full antialiased dark`}
     >
-      <body className="min-h-full flex flex-col"><AuthProvider>{children}</AuthProvider></body>
+      <body className="min-h-full flex flex-col">
+        <AuthProvider>
+          <AppProvider>
+            {children}
+          </AppProvider>
+        </AuthProvider>
+      </body>
     </html>
   );
 }

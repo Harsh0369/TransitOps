@@ -378,3 +378,113 @@ export const INITIAL_FUEL_LOGS: FuelLog[] = [
     date: '2026-07-11T14:45:00Z'
   }
 ];
+
+export const INITIAL_AUDIT_LOGS = [
+  {
+    id: 'a9f1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c',
+    action: 'TRIP_CREATED',
+    entity: 'Trip',
+    entityId: 'T9001',
+    oldValue: null,
+    newValue: {
+      source: 'Mumbai Port',
+      destination: 'Pune Warehouse',
+      driverId: 'D-201',
+      vehicleId: 'V-101',
+      cargoWeight: 950
+    },
+    metadata: { source: 'Mumbai Port', destination: 'Pune Warehouse' },
+    reason: 'Initial setup',
+    ipAddress: '192.168.1.100',
+    userId: 'u-101',
+    user: {
+      id: 'u-101',
+      name: 'Manager A',
+      email: 'manager.a@transitops.in',
+      role: 'FLEET_MANAGER'
+    },
+    timestamp: '2026-07-12T06:00:00Z'
+  },
+  {
+    id: 'b8f2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d',
+    action: 'TRIP_DISPATCHED',
+    entity: 'Trip',
+    entityId: 'T9001',
+    oldValue: { status: 'DRAFT' },
+    newValue: { status: 'DISPATCHED' },
+    metadata: { driverId: 'D-201', vehicleId: 'V-101' },
+    reason: 'Assets cleared compliance inspection',
+    ipAddress: '192.168.1.100',
+    userId: 'u-101',
+    user: {
+      id: 'u-101',
+      name: 'Manager A',
+      email: 'manager.a@transitops.in',
+      role: 'FLEET_MANAGER'
+    },
+    timestamp: '2026-07-12T06:15:00Z'
+  },
+  {
+    id: 'c7e3d4c5-b6a7-4b8c-9d0e-1f2a3b4c5d6e',
+    action: 'MAINTENANCE_STARTED',
+    entity: 'Maintenance',
+    entityId: 'M-501',
+    oldValue: null,
+    newValue: {
+      vehicleId: 'V-104',
+      maintenanceType: 'Engine Tuning',
+      description: 'Fuel injector replacement and engine tuning due to rough idling.',
+      status: 'OPEN'
+    },
+    metadata: { vehicleId: 'V-104' },
+    reason: 'Reported by driver during trip return',
+    ipAddress: '192.168.1.102',
+    userId: 'u-102',
+    user: {
+      id: 'u-102',
+      name: 'Sarah Smith',
+      email: 'sarah.s@transitops.in',
+      role: 'FLEET_MANAGER'
+    },
+    timestamp: '2026-07-12T06:30:00Z'
+  },
+  {
+    id: 'd6d4c5b6-a7b8-4c9d-0e1f-2a3b4c5d6e7f',
+    action: 'USER_ROLE_UPDATED',
+    entity: 'User',
+    entityId: 'u-105',
+    oldValue: { role: 'DRIVER' },
+    newValue: { role: 'FLEET_MANAGER' },
+    metadata: { role: 'FLEET_MANAGER' },
+    reason: 'Promotion to Fleet Controller',
+    ipAddress: '192.168.1.1',
+    userId: 'u-admin',
+    user: {
+      id: 'u-admin',
+      name: 'Admin User',
+      email: 'admin@transitops.in',
+      role: 'ADMIN'
+    },
+    timestamp: '2026-07-11T10:00:00Z'
+  },
+  {
+    id: 'e5c5b6a7-b8c9-4d0e-1f2a-3b4c5d6e7f8a',
+    action: 'COMPLIANCE_RENEWED',
+    entity: 'VehicleCompliance',
+    entityId: 'c-901',
+    oldValue: { expiryDate: '2026-07-10' },
+    newValue: { expiryDate: '2027-07-10' },
+    metadata: null,
+    reason: 'Annual PUC certification renewal',
+    ipAddress: '192.168.1.104',
+    userId: 'u-103',
+    user: {
+      id: 'u-103',
+      name: 'John Doe',
+      email: 'john.d@transitops.in',
+      role: 'SAFETY_OFFICER'
+    },
+    timestamp: '2026-07-10T11:30:00Z'
+  }
+];
+

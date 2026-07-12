@@ -13,8 +13,10 @@ import { MaintenanceView } from '../components/MaintenanceView';
 import { ExpensesView } from '../components/ExpensesView';
 import { AnalyticsView } from '../components/AnalyticsView';
 import { SettingsView } from '../components/SettingsView';
+import { AuditLogsView } from '../components/AuditLogsView';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
+export function Home() {
   const { activeTab } = useAppContext();
 
   const renderView = () => {
@@ -35,6 +37,8 @@ export default function Home() {
         return <ExpensesView />;
       case 'analytics':
         return <AnalyticsView />;
+      case 'audit-logs':
+        return <AuditLogsView />;
       case 'settings':
         return <SettingsView />;
       default:
@@ -61,7 +65,7 @@ export default function Home() {
       </div>
     </div>
   );
-import { redirect } from 'next/navigation';
+}
 
 export default function RootPage() {
   redirect('/login');
