@@ -391,6 +391,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       { status: 'COMPLETED', finalOdometer, fuelUsed },
       { fuelCost: fuelUsed * 1.5 }
     );
+    return updatedTrip as Trip;
   };
 
   // Maintenance Functions
@@ -429,6 +430,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
       },
       { vehicleId }
     );
+    return newMaint;
   };
 
   const resolveMaintenance = async (maintenanceId: string, cost: number): Promise<Maintenance> => {

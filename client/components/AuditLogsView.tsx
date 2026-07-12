@@ -42,7 +42,7 @@ export const AuditLogsView = () => {
   };
 
   // Filter & Search Logic
-  const filteredLogs = auditLogs.filter(log => {
+  const filteredLogs = auditLogs.filter((log: any) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesSearch = 
       log.id.toLowerCase().includes(searchLower) ||
@@ -508,7 +508,7 @@ export const AuditLogsView = () => {
                       <span>Timestamp:</span>
                     </div>
                     <span className="font-mono text-zinc-700 dark:text-zinc-300 font-semibold">
-                      {new Date(selectedLog.timestamp || selectedLog.createdAt).toLocaleString()}
+                      {new Date(selectedLog.timestamp || selectedLog.createdAt || 0).toLocaleString()}
                     </span>
                   </div>
 

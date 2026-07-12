@@ -64,7 +64,7 @@ export const ReportsView = () => {
   const exportUtilizationCSV = () => {
     const data = getUtilizationData();
     const headers = ['Vehicle ID', 'Registration Number', 'Asset Name', 'Type', 'Status', 'Total Trips', 'Completed Trips', 'Total Distance (km)', 'Utilization Rate (%)'];
-    const rows = data.map(item => [
+    const rows = data.map((item: any) => [
       item.id,
       item.regNum,
       item.name,
@@ -102,7 +102,7 @@ export const ReportsView = () => {
   const exportCostCSV = () => {
     const data = getCostData();
     const headers = ['Vehicle ID', 'Asset Name', 'Registration Number', 'Fuel Cost (INR)', 'Maintenance Cost (INR)', 'Other Expenses (INR)', 'Total Cost (INR)'];
-    const rows = data.map(item => [
+    const rows = data.map((item: any) => [
       item.id,
       item.name,
       item.regNum,
@@ -142,7 +142,7 @@ export const ReportsView = () => {
   const exportFuelEfficiencyCSV = () => {
     const data = getFuelEfficiencyData();
     const headers = ['Vehicle ID', 'Asset Name', 'Registration Number', 'Total Fuel Used (Liters)', 'Total Distance (km)', 'Fuel Efficiency (km/L)', 'Total Fuel Cost (INR)'];
-    const rows = data.map(item => [
+    const rows = data.map((item: any) => [
       item.id,
       item.name,
       item.regNum,
@@ -188,7 +188,7 @@ export const ReportsView = () => {
   const exportROICSV = () => {
     const data = getROIData();
     const headers = ['Vehicle ID', 'Asset Name', 'Registration Number', 'Acquisition Cost (INR)', 'Estimated Revenue (INR)', 'Total Expenses (INR)', 'Net Return (INR)', 'ROI (%)'];
-    const rows = data.map(item => [
+    const rows = data.map((item: any) => [
       item.id,
       item.name,
       item.regNum,
@@ -203,10 +203,10 @@ export const ReportsView = () => {
 
   // Calculate global summary metrics across all reports
   const allCostData = getCostData();
-  const grandTotalSpend = allCostData.reduce((sum, i) => sum + i.totalCost, 0);
-  const totalFleetDistance = getUtilizationData().reduce((sum, i) => sum + i.distance, 0);
-  const averageEfficiency = parseFloat((getFuelEfficiencyData().reduce((sum, i) => sum + i.efficiency, 0) / (vehicles.length || 1)).toFixed(2));
-  const averageROI = parseFloat((getROIData().reduce((sum, i) => sum + i.roiPercentage, 0) / (vehicles.length || 1)).toFixed(2));
+  const grandTotalSpend = allCostData.reduce((sum: any, i: any) => sum + i.totalCost, 0);
+  const totalFleetDistance = getUtilizationData().reduce((sum: any, i: any) => sum + i.distance, 0);
+  const averageEfficiency = parseFloat((getFuelEfficiencyData().reduce((sum: any, i: any) => sum + i.efficiency, 0) / (vehicles.length || 1)).toFixed(2));
+  const averageROI = parseFloat((getROIData().reduce((sum: any, i: any) => sum + i.roiPercentage, 0) / (vehicles.length || 1)).toFixed(2));
 
   return (
     <div className="space-y-6">
@@ -341,7 +341,7 @@ export const ReportsView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 font-medium">
-                  {getUtilizationData().map((item) => (
+                  {getUtilizationData().map((item: any) => (
                     <tr key={item.id} className="hover:bg-zinc-50/50">
                       <td className="px-6 py-3.5 text-zinc-400 font-semibold">{item.id}</td>
                       <td className="px-6 py-3.5 text-zinc-800">{item.name}</td>
@@ -390,7 +390,7 @@ export const ReportsView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 font-medium">
-                  {getCostData().map((item) => (
+                  {getCostData().map((item: any) => (
                     <tr key={item.id} className="hover:bg-zinc-50/50">
                       <td className="px-6 py-3.5 text-zinc-400 font-semibold">{item.id}</td>
                       <td className="px-6 py-3.5 text-zinc-800">{item.name}</td>
@@ -429,7 +429,7 @@ export const ReportsView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 font-medium">
-                  {getFuelEfficiencyData().map((item) => (
+                  {getFuelEfficiencyData().map((item: any) => (
                     <tr key={item.id} className="hover:bg-zinc-50/50">
                       <td className="px-6 py-3.5 text-zinc-400 font-semibold">{item.id}</td>
                       <td className="px-6 py-3.5 text-zinc-800">{item.name}</td>
@@ -468,7 +468,7 @@ export const ReportsView = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 font-medium">
-                  {getROIData().map((item) => (
+                  {getROIData().map((item: any) => (
                     <tr key={item.id} className="hover:bg-zinc-50/50">
                       <td className="px-6 py-3.5 text-zinc-400 font-semibold">{item.id}</td>
                       <td className="px-6 py-3.5 text-zinc-800">{item.name} ({item.regNum})</td>
