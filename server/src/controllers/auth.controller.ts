@@ -8,8 +8,8 @@ export class AuthController {
   
   static async register(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password, role } = req.body;
-      const user = await authService.registerUser(email, password, role);
+      const { name, email, password } = req.body;
+      const user = await authService.registerUser(name, email, password);
       
       res.status(201).json(successResponse('User registered successfully', user));
     } catch (error: any) {
