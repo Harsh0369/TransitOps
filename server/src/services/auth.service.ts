@@ -26,6 +26,16 @@ export class AuthService {
         email,
         password: hashedPassword,
         role: role || 'FLEET_MANAGER', // Default role
+    const userCount = await prisma.user.count();
+    const assignedRole = userCount === 0 ? 'FLEET_MANAGER' : 'DRIVER';
+
+    const newUser = await prisma.user.create({
+      data: {
+        name,
+        email,
+        phoneNumber,
+        password: hashedPassword,
+        role: assignedRole,
       },
     });
 
