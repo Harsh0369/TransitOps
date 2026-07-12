@@ -1,52 +1,95 @@
 "use client";
 
 import React, { createContext, useState, useEffect } from "react";
-import { User, Role } from "@/types/auth";
+import { User } from "@/types/auth";
 import { useRouter } from "next/navigation";
+import { authApi } from "@/services/api";
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (role: Role) => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  error: string | null;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const getRoleBasedRedirect = (role: string): string => {
+  switch (role) {
+    case "Fleet Manager":
+      return "/dashboard";
+    case "Dispatcher":
+      return "/trips";
+    case "Safety Officer":
+      return "/drivers";
+    case "Financial Analyst":
+      return "/analytics";
+    default:
+      return "/dashboard";
+  }
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const storedUser = localStorage.getItem("transitops_user");
     if (storedUser) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUser(JSON.parse(storedUser));
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse stored user");
+        localStorage.removeItem("transitops_user");
+      }
     }
     setIsLoading(false);
   }, []);
 
-  const login = (role: Role) => {
-    const newUser: User = {
-      id: "1",
-      name: "Demo User",
-      email: "demo@transitops.in",
-      role,
-    };
-    setUser(newUser);
-    localStorage.setItem("transitops_user", JSON.stringify(newUser));
-    router.push("/dashboard");
+  const login = async (email: string, password: string) => {
+    setError(null);
+    try {
+      const response = await authApi.login({ email, password });
+      
+      if (response.success && response.data) {
+        const { token, user: userData } = response.data;
+        
+        // Store token and user
+        localStorage.setItem("transitops_token", token);
+        localStorage.setItem("transitops_user", JSON.stringify(userData));
+        
+        setUser(userData);
+        
+        // Redirect based on role
+        const redirectPath = getRoleBasedRedirect(userData.role);
+        router.push(redirectPath);
+        
+        return { success: true };
+      } else {
+        const errorMsg = response.message || "Login failed";
+        setError(errorMsg);
+        return { success: false, error: errorMsg };
+      }
+    } catch (err: unknown) {
+      const errorMsg = err instanceof Error ? err.message : "An error occurred during login";
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    }
   };
 
   const logout = () => {
     setUser(null);
+    setError(null);
+    localStorage.removeItem("transitops_token");
     localStorage.removeItem("transitops_user");
     router.push("/login");
   };
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, login, logout, error }}>
       {children}
     </AuthContext.Provider>
   );
