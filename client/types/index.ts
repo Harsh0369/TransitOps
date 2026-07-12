@@ -1,7 +1,5 @@
 // Shared TypeScript types
 
-export type Role = 'ADMIN' | 'FLEET_MANAGER' | 'DRIVER' | 'SAFETY_OFFICER' | 'FINANCIAL_ANALYST';
-
 export type VehicleStatus = 'AVAILABLE' | 'ON_TRIP' | 'IN_SHOP' | 'RETIRED';
 
 export type DriverStatus = 'AVAILABLE' | 'ON_TRIP' | 'OFF_DUTY' | 'SUSPENDED';
@@ -9,13 +7,6 @@ export type DriverStatus = 'AVAILABLE' | 'ON_TRIP' | 'OFF_DUTY' | 'SUSPENDED';
 export type TripStatus = 'DRAFT' | 'DISPATCHED' | 'COMPLETED' | 'CANCELLED';
 
 export type MaintenanceStatus = 'OPEN' | 'CLOSED';
-
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  role: Role;
-}
 
 export interface Vehicle {
   id: string;

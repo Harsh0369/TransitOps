@@ -30,7 +30,7 @@ export default function AnalyticsPage() {
   const chartData = revenueRange === "6" ? monthlyRevenue.slice(-6) : monthlyRevenue;
 
   return (
-    <RoleGuard allowedRoles={["Financial Analyst"]}>
+    <RoleGuard allowedRoles={["Fleet Manager", "Financial Analyst"]}>
       <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-8">
 
         {/* Header */}

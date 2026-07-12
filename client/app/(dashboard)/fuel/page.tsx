@@ -28,7 +28,7 @@ export default function FuelExpensesPage() {
   }, []);
 
   return (
-    <RoleGuard allowedRoles={["Financial Analyst"]}>
+    <RoleGuard allowedRoles={["Fleet Manager", "Financial Analyst"]}>
       <div
         className="p-margin_desktop min-h-[calc(100vh-64px)] overflow-y-auto"
         style={{ backgroundColor: "var(--color-background)" }}

@@ -29,7 +29,7 @@ export default function TripsPage() {
   const overCapacity = cargoWeight > capacity;
 
   return (
-    <RoleGuard allowedRoles={["Dispatcher"]}>
+    <RoleGuard allowedRoles={["Fleet Manager", "Dispatcher"]}>
       <div
         className="p-margin_desktop min-h-[calc(100vh-64px)] overflow-y-auto"
         style={{ backgroundColor: "var(--color-background)" }}
