@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { Role } from '@prisma/client';
+import { AuditService } from './audit.service';
 
 export class AuthService {
   private readonly jwtSecret: string;
@@ -33,6 +34,8 @@ export class AuthService {
         role: assignedRole,
       },
     });
+
+    await AuditService.log('USER_REGISTERED', 'User', newUser.id, newUser.id, { role: assignedRole });
 
     // Exclude password from the returned object
     const { password, ...userWithoutPassword } = newUser;

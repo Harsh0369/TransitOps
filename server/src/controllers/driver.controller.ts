@@ -60,8 +60,28 @@ export class DriverController {
   static async updateStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const { status } = req.body;
-      const driver = await driverService.updateStatus(req.params.id as string, status);
+      const driver = await driverService.updateStatus(req.params.id as string, status, req.user!.userId);
       res.status(200).json(successResponse('Driver status updated successfully', driver));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async updateSafetyScore(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { safetyScore } = req.body;
+      const driver = await driverService.updateSafetyScore(req.params.id as string, safetyScore, req.user!.userId);
+      res.status(200).json(successResponse('Driver safety score updated', driver));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async renewLicense(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { licenseExpiry } = req.body;
+      const driver = await driverService.renewLicense(req.params.id as string, new Date(licenseExpiry), req.user!.userId);
+      res.status(200).json(successResponse('Driver license renewed', driver));
     } catch (error) {
       next(error);
     }

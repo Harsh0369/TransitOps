@@ -1,4 +1,6 @@
 import { prisma } from '../lib/prisma';
+import { VehicleStatus } from '@prisma/client';
+import { AuditService } from './audit.service';
 
 export class VehicleService {
   async getAllVehicles() {
@@ -22,14 +24,20 @@ export class VehicleService {
       throw new Error('Registration number already exists');
     }
     
-    return prisma.vehicle.create({ data });
+    const newVehicle = await prisma.vehicle.create({
+      data,
+    });
+    AuditService.log('VEHICLE_CREATED', 'Vehicle', newVehicle.id, undefined, { registrationNumber: newVehicle.registrationNumber });
+    return newVehicle;
   }
 
   async updateVehicle(id: string, data: any) {
-    return prisma.vehicle.update({
+    const updated = await prisma.vehicle.update({
       where: { id },
-      data
+      data,
     });
+    AuditService.log('VEHICLE_UPDATED', 'Vehicle', id, undefined, { updatedFields: Object.keys(data) });
+    return updated;
   }
 
   async retireVehicle(id: string) {
@@ -38,5 +46,14 @@ export class VehicleService {
       where: { id },
       data: { status: 'RETIRED' }
     });
+  }
+
+  async updateStatus(id: string, status: VehicleStatus) {
+    const updated = await prisma.vehicle.update({
+      where: { id },
+      data: { status },
+    });
+    AuditService.log('VEHICLE_STATUS_CHANGED', 'Vehicle', id, undefined, { status });
+    return updated;
   }
 }

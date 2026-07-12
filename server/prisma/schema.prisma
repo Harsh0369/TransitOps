@@ -33,6 +33,7 @@ enum DriverStatus {
 enum TripStatus {
   DRAFT
   DISPATCHED
+  PENDING_APPROVAL
   COMPLETED
   CANCELLED
 }
@@ -104,6 +105,7 @@ model Trip {
   distance        Float?
   dispatchDate    DateTime?
   completionDate  DateTime?
+  completionNotes String?
   finalOdometer   Float?
   fuelUsed        Float?
   status          TripStatus @default(DRAFT)
@@ -173,6 +175,7 @@ model AuditLog {
   action    String
   entity    String
   entityId  String
+  metadata  Json?
   userId    String?
   timestamp DateTime @default(now())
 
