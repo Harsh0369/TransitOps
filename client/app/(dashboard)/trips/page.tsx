@@ -80,7 +80,7 @@ export default function TripsPage() {
   };
 
   return (
-    <RoleGuard allowedRoles={["Fleet Manager", "Dispatcher"]}>
+    <RoleGuard allowedRoles={["FLEET_MANAGER", "DRIVER"]}>
       <div
         className="p-margin_desktop min-h-[calc(100vh-64px)] overflow-y-auto"
         style={{ backgroundColor: "var(--color-background)" }}
@@ -333,7 +333,6 @@ export default function TripsPage() {
                   </button>
                 </div>
               </form>
-              </div>
             </div>
 
             {/* Helper tip */}
@@ -413,7 +412,7 @@ export default function TripsPage() {
                           <div className="flex items-center gap-6">
                             <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>
                               <Truck className="w-4 h-4" />
-                              <span className="text-sm">{trip.vehicle || "Unassigned"} / {trip.driver || "Unassigned"}</span>
+                              <span className="text-sm">{trip.vehicle?.name || trip.vehicleName || "Unassigned"} / {trip.driver?.name || trip.driverName || "Unassigned"}</span>
                             </div>
                             {trip.status === "Dispatched" && (
                               <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>

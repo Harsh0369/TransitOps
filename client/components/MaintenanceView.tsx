@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAppContext } from '../providers/AppProvider';
+import { useMaintenance, useResolveMaintenance } from '../hooks/queries';
 import { Wrench, CheckCircle, AlertCircle, Calendar } from 'lucide-react';
 import { MaintenanceStatus } from '../types';
 
 export const MaintenanceView = () => {
-  const { maintenance, resolveMaintenance } = useAppContext();
+  const { data: maintenance = [], isLoading } = useMaintenance();
+  const { mutate: resolveMaintenance } = useResolveMaintenance();
   const [resolveCost, setResolveCost] = useState<number>(250);
   const [selectedMaintId, setSelectedMaintId] = useState('');
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
@@ -34,7 +35,7 @@ export const MaintenanceView = () => {
     e.preventDefault();
     if (!selectedMaintId) return;
 
-    resolveMaintenance(selectedMaintId, resolveCost);
+    resolveMaintenance({ id: selectedMaintId, cost: resolveCost });
     setIsResolveModalOpen(false);
     setResolveCost(250);
     alert('Vehicle maintenance resolved. Asset returned to service.');
@@ -48,7 +49,7 @@ export const MaintenanceView = () => {
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Active Shop Orders</p>
             <h3 className="text-2xl font-bold text-zinc-900 mt-1">
-              {maintenance.filter(m => m.status === 'OPEN').length}
+              {isLoading ? '...' : maintenance.filter((m: any) => m.status === 'OPEN').length}
             </h3>
           </div>
           <p className="text-[10px] text-amber-600 font-semibold mt-2">Awaiting technicians</p>
@@ -58,7 +59,7 @@ export const MaintenanceView = () => {
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Completed Maintenance</p>
             <h3 className="text-2xl font-bold text-zinc-900 mt-1">
-              {maintenance.filter(m => m.status === 'CLOSED').length}
+              {isLoading ? '...' : maintenance.filter((m: any) => m.status === 'CLOSED').length}
             </h3>
           </div>
           <p className="text-[10px] text-emerald-600 font-semibold mt-2">Assets back in service</p>
@@ -68,7 +69,7 @@ export const MaintenanceView = () => {
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Total Repair Cost</p>
             <h3 className="text-2xl font-bold text-zinc-900 mt-1">
-              INR {maintenance.reduce((sum, m) => sum + (m.cost || 0), 0).toLocaleString()}
+              INR {isLoading ? '...' : maintenance.reduce((sum: number, m: any) => sum + (m.cost || 0), 0).toLocaleString()}
             </h3>
           </div>
           <p className="text-[10px] text-zinc-400 mt-2">Includes parts & labor</p>
@@ -83,7 +84,9 @@ export const MaintenanceView = () => {
         </div>
 
         <div className="space-y-4">
-          {maintenance.map((m) => (
+          {isLoading ? (
+            <div className="py-12 text-center text-sm text-zinc-400">Loading maintenance records...</div>
+          ) : maintenance.map((m: any) => (
             <div
               key={m.id}
               className="p-4 border border-zinc-100 bg-zinc-50/20 rounded-xl flex flex-wrap items-center justify-between gap-4 hover:border-zinc-200 transition-all"
@@ -91,7 +94,7 @@ export const MaintenanceView = () => {
               <div className="space-y-1.5 flex-1 min-w-[280px]">
                 <div className="flex items-center gap-2.5">
                   <span className="text-xs font-bold text-zinc-400">{m.id}</span>
-                  <span className="text-sm font-bold text-zinc-800">{m.vehicleName}</span>
+                  <span className="text-sm font-bold text-zinc-800">{m.vehicle?.name || m.vehicleName}</span>
                   <span className="text-xs px-2 py-0.5 bg-zinc-100 text-zinc-600 rounded-md font-medium border border-zinc-200/50">
                     {m.maintenanceType}
                   </span>
@@ -136,11 +139,12 @@ export const MaintenanceView = () => {
             </div>
           ))}
 
-          {maintenance.length === 0 && (
+          {!isLoading && maintenance.length === 0 && (
             <div className="py-12 text-center text-sm text-zinc-400">
               No maintenance tickets registered in database.
             </div>
           )}
+          {isLoading && maintenance.length > 0 && null /* To satisfy TS/JSX parsing */}
         </div>
       </div>
 

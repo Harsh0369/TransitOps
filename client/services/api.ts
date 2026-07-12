@@ -20,8 +20,8 @@ export const authApi = {
     const response = await apiClient.post<LoginResponse>('/auth/login', credentials);
     return response.data;
   },
-};
-
-export const fetchData = async () => {
-  return { message: "Hello from API" };
+  getMe: async (): Promise<{ success: boolean; data: User }> => {
+    const response = await apiClient.get('/auth/me');
+    return response.data;
+  }
 };

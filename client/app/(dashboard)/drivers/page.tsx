@@ -28,7 +28,7 @@ export default function DriversPage() {
   ];
 
   return (
-    <RoleGuard allowedRoles={["Fleet Manager", "Dispatcher", "Safety Officer"]}>
+    <RoleGuard allowedRoles={["FLEET_MANAGER", "DRIVER", "SAFETY_OFFICER"]}>
       <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto pb-8">
 
         {/* Header */}

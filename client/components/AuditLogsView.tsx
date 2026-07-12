@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAppContext } from '../providers/AppProvider';
+import { useAuditLogs } from '../hooks/queries';
 import { AuditLog } from '../types';
 import {
   ClipboardList,
@@ -24,7 +24,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const AuditLogsView = () => {
-  const { auditLogs } = useAppContext();
+  const { data: auditLogs = [], isLoading } = useAuditLogs();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEntityFilter, setSelectedEntityFilter] = useState('all');
   const [selectedActionFilter, setSelectedActionFilter] = useState('all');
@@ -205,7 +205,7 @@ export const AuditLogsView = () => {
           </div>
           <div>
             <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider block">Total Logs</span>
-            <span className="text-2xl font-bold text-zinc-800 dark:text-white leading-none">{auditLogs.length}</span>
+            <span className="text-2xl font-bold text-zinc-800 dark:text-white leading-none">{isLoading ? '...' : auditLogs.length}</span>
             <span className="text-[10px] text-emerald-600 dark:text-emerald-400 block mt-1 font-semibold">Ledger Active</span>
           </div>
         </div>
@@ -217,7 +217,7 @@ export const AuditLogsView = () => {
           <div>
             <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider block">Trip Events</span>
             <span className="text-2xl font-bold text-zinc-800 dark:text-white leading-none">
-              {auditLogs.filter(l => l.entity === 'Trip').length}
+              {isLoading ? '...' : auditLogs.filter((l: any) => l.entity === 'Trip').length}
             </span>
             <span className="text-[10px] text-zinc-400 block mt-1">Dispatches & completions</span>
           </div>
@@ -230,7 +230,7 @@ export const AuditLogsView = () => {
           <div>
             <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider block">Maintenance</span>
             <span className="text-2xl font-bold text-zinc-800 dark:text-white leading-none">
-              {auditLogs.filter(l => l.entity === 'Maintenance').length}
+              {isLoading ? '...' : auditLogs.filter((l: any) => l.entity === 'Maintenance').length}
             </span>
             <span className="text-[10px] text-zinc-400 block mt-1">Workshops & repairs</span>
           </div>
@@ -243,7 +243,7 @@ export const AuditLogsView = () => {
           <div>
             <span className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider block">Security & Access</span>
             <span className="text-2xl font-bold text-zinc-800 dark:text-white leading-none">
-              {auditLogs.filter(l => l.entity === 'User' || l.entity === 'VehicleCompliance').length}
+              {isLoading ? '...' : auditLogs.filter((l: any) => l.entity === 'User' || l.entity === 'VehicleCompliance').length}
             </span>
             <span className="text-[10px] text-zinc-400 block mt-1">Role & status changes</span>
           </div>
@@ -318,15 +318,24 @@ export const AuditLogsView = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100 dark:divide-zinc-850">
-              {paginatedLogs.length > 0 ? (
-                paginatedLogs.map((log) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center text-zinc-400 dark:text-zinc-500">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <ClipboardList className="w-8 h-8 text-zinc-300 dark:text-zinc-800 animate-pulse" />
+                      <p className="text-sm font-semibold">Loading audit logs...</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginatedLogs.length > 0 ? (
+                paginatedLogs.map((log: any) => (
                   <tr 
                     key={log.id} 
                     className="hover:bg-zinc-50/40 dark:hover:bg-zinc-850/40 transition-colors duration-150 cursor-pointer group"
                     onClick={() => setSelectedLog(log)}
                   >
                     <td className="px-6 py-4.5 whitespace-nowrap text-zinc-400 dark:text-zinc-500 font-mono text-xs">
-                      {new Date(log.timestamp).toLocaleString()}
+                      {new Date(log.timestamp || log.createdAt).toLocaleString()}
                     </td>
                     <td className="px-6 py-4.5 font-medium">
                       {getActionBadge(log.action)}
@@ -340,7 +349,7 @@ export const AuditLogsView = () => {
                     <td className="px-6 py-4.5">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center text-[10px] font-bold text-zinc-600 dark:text-zinc-300 uppercase shrink-0">
-                          {log.user?.name ? log.user.name.split(' ').map(n => n[0]).join('').substring(0, 2) : 'SY'}
+                          {log.user?.name ? log.user.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2) : 'SY'}
                         </div>
                         <div className="min-w-0">
                           <p className="text-xs font-semibold text-zinc-700 dark:text-zinc-200 truncate">{log.user?.name || 'System Auto'}</p>
@@ -499,7 +508,7 @@ export const AuditLogsView = () => {
                       <span>Timestamp:</span>
                     </div>
                     <span className="font-mono text-zinc-700 dark:text-zinc-300 font-semibold">
-                      {new Date(selectedLog.timestamp).toLocaleString()}
+                      {new Date(selectedLog.timestamp || selectedLog.createdAt).toLocaleString()}
                     </span>
                   </div>
 

@@ -7,9 +7,9 @@ export function TopNavbar() {
   const { user, logout, isLoading } = useAuth();
   if (isLoading || !user) return null;
 
-  const initials = user.name
+  const initials = (user.name || "U")
     .split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase();
 

@@ -5,7 +5,7 @@ import { DashboardView } from "@/components/DashboardView";
 
 export default function DashboardPage() {
   return (
-    <RoleGuard allowedRoles={["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"]}>
+    <RoleGuard allowedRoles={["FLEET_MANAGER", "DRIVER", "SAFETY_OFFICER", "FINANCIAL_ANALYST"]}>
       <DashboardView />
     </RoleGuard>
   );

@@ -8,8 +8,13 @@ This project was built as part of a software engineering hackathon with a heavy 
 
 ---
 
-## Testing the Platform
+## 🚀 Quick Evaluation Guide (Credentials & Data)
 
+Both our Local and Neon (Cloud) PostgreSQL databases have been seeded with extensive, varied data (100+ vehicles, 75 drivers, 400+ trips, rich audit logs, maintenance records, and fuel histories). 
+
+
+
+### Role-Based Access Control (Demo Credentials)
 We've implemented Role-Based Access Control (RBAC) across the app. We recommend trying out these demo accounts to see how the views and permissions change:
 
 - **Fleet Manager** (Full Access): `fleet@demo.com` / `Password123`
@@ -35,7 +40,12 @@ For complete auditability, we built endpoints that merge system `AuditLog` event
 
 ### 4. Executive Insights & Global Search
 - **Insights:** The dashboard pulls live fleet utilization %, total maintenance spend, and identifies the highest operational cost vehicles (`/api/dashboard/insights`).
-- **Universal Search:** You can hit `/api/dashboard/search?q=Ahmedabad` and it will instantly search across vehicles, drivers, and trips to return grouped results.
+- **Universal Search Examples:** 
+  You can hit `/api/dashboard/search?q=Ahmedabad` and it will instantly search across vehicles, drivers, and trips to return grouped results. Try these searches:
+  - `"DRAFT"` or `"COMPLETED"` to find trips by status.
+  - `"HEAVY"` to find heavy-duty vehicles or heavy-licensed drivers.
+  - `"DEMO-LIC-123"` to find the specific demo driver by license.
+  - Use table filters on the Vehicles page to filter by `status=IN_SHOP` to test operations center alerts.
 
 ---
 

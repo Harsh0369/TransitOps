@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Vehicle, Driver, Trip, Maintenance, Expense, FuelLog, TripStatus, VehicleStatus, DriverStatus } from '../types';
+import { Vehicle, Driver, Trip, Maintenance, Expense, FuelLog, TripStatus, VehicleStatus, DriverStatus, AuditLog } from '../types';
 import {
   INITIAL_VEHICLES,
   INITIAL_DRIVERS,

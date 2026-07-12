@@ -90,3 +90,16 @@ export interface Expense {
   description: string;
   date: string;
 }
+
+export interface AuditLog {
+  id: string;
+  action: string;
+  entity: string;
+  entityId: string;
+  userId: string;
+  timestamp: string;
+  oldValue?: any;
+  newValue?: any;
+  metadata?: any;
+}
+

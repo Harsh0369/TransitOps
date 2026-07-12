@@ -23,14 +23,14 @@ interface NavConfig extends NavItem {
 }
 
 const navConfig: NavConfig[] = [
-  { name: "Dashboard",      href: "/dashboard",   icon: "dashboard",      IconComponent: LayoutDashboard, roles: ["Fleet Manager", "Dispatcher", "Safety Officer", "Financial Analyst"] },
-  { name: "Fleet",          href: "/vehicles",    icon: "fleet",          IconComponent: Truck,           roles: ["Fleet Manager", "Dispatcher"] },
-  { name: "Drivers",        href: "/drivers",     icon: "drivers",        IconComponent: Users,           roles: ["Fleet Manager", "Dispatcher", "Safety Officer"] },
-  { name: "Trips",          href: "/trips",       icon: "trips",          IconComponent: Route,           roles: ["Fleet Manager", "Dispatcher"] },
-  { name: "Maintenance",    href: "/maintenance", icon: "maintenance",    IconComponent: Wrench,          roles: ["Fleet Manager"] },
-  { name: "Fuel & Expenses",href: "/fuel",        icon: "fuel",           IconComponent: Wallet,          roles: ["Fleet Manager", "Financial Analyst"] },
-  { name: "Analytics",      href: "/analytics",   icon: "analytics",      IconComponent: BarChart3,       roles: ["Fleet Manager", "Financial Analyst"] },
-  { name: "Settings",       href: "/settings",    icon: "settings",       IconComponent: Settings,        roles: ["Fleet Manager"] },
+  { name: "Dashboard",      href: "/dashboard",   icon: "dashboard",      IconComponent: LayoutDashboard, roles: ["FLEET_MANAGER", "DRIVER", "SAFETY_OFFICER", "FINANCIAL_ANALYST"] },
+  { name: "Fleet",          href: "/vehicles",    icon: "fleet",          IconComponent: Truck,           roles: ["FLEET_MANAGER", "DRIVER"] },
+  { name: "Drivers",        href: "/drivers",     icon: "drivers",        IconComponent: Users,           roles: ["FLEET_MANAGER", "DRIVER", "SAFETY_OFFICER"] },
+  { name: "Trips",          href: "/trips",       icon: "trips",          IconComponent: Route,           roles: ["FLEET_MANAGER", "DRIVER"] },
+  { name: "Maintenance",    href: "/maintenance", icon: "maintenance",    IconComponent: Wrench,          roles: ["FLEET_MANAGER"] },
+  { name: "Fuel & Expenses",href: "/fuel",        icon: "fuel",           IconComponent: Wallet,          roles: ["FLEET_MANAGER", "FINANCIAL_ANALYST"] },
+  { name: "Analytics",      href: "/analytics",   icon: "analytics",      IconComponent: BarChart3,       roles: ["FLEET_MANAGER", "FINANCIAL_ANALYST"] },
+  { name: "Settings",       href: "/settings",    icon: "settings",       IconComponent: Settings,        roles: ["FLEET_MANAGER"] },
 ];
 
 export function Sidebar() {
@@ -41,9 +41,9 @@ export function Sidebar() {
 
   const allowedNavItems = navConfig.filter(item => item.roles.includes(user.role));
 
-  const initials = user.name
+  const initials = (user.name || "U")
     .split(" ")
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join("")
     .toUpperCase();
 
@@ -139,7 +139,7 @@ export function Sidebar() {
                 </span>
 
                 {/* R/O badge for Dispatcher */}
-                {user.role === "Dispatcher" &&
+                {user.role === "DRIVER" &&
                   (item.name === "Fleet" || item.name === "Drivers") && (
                     <span
                       className="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider"

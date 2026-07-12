@@ -22,7 +22,7 @@ export default function FuelExpensesPage() {
   const totalCost = allItems.reduce((sum: number, item: any) => sum + (parseInt(item.cost) || 0), 0);
 
   return (
-    <RoleGuard allowedRoles={["Fleet Manager", "Financial Analyst"]}>
+    <RoleGuard allowedRoles={["FLEET_MANAGER", "FINANCIAL_ANALYST"]}>
       <div
         className="p-margin_desktop min-h-[calc(100vh-64px)] overflow-y-auto"
         style={{ backgroundColor: "var(--color-background)" }}
@@ -199,7 +199,7 @@ export default function FuelExpensesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y" style={{ borderColor: "var(--color-outline-variant)" }}>
-                  {fuelLogs.map((log, i) => {
+                  {fuelLogs.map((log: any, i: number) => {
                     const isTruck = log.type === "Truck";
                     return (
                       <tr
@@ -294,7 +294,7 @@ export default function FuelExpensesPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y" style={{ borderColor: "var(--color-outline-variant)" }}>
-                  {otherExpenses.map((exp, i) => {
+                  {([] as any[]).map((exp, i) => {
                     const total = exp.toll + exp.other + exp.maint;
                     const isAvailable = exp.status === "Available";
                     return (
@@ -382,7 +382,7 @@ export default function FuelExpensesPage() {
               <span
                 className={clsx(
                   "font-display-lg text-6xl tracking-tighter transition-all duration-300",
-                  isFading ? "opacity-70 scale-[0.99]" : "opacity-100"
+                  "opacity-100"
                 )}
                 style={{ color: "var(--color-primary)" }}
               >

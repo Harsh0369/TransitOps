@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useAppContext } from '../providers/AppProvider';
+import { useVehicles, useTrips, useExpenses, useFuelLogs } from '../hooks/queries';
 import { FileSpreadsheet, Download, RefreshCw, BarChart2, Coins, Fuel, Percent } from 'lucide-react';
 
 export const ReportsView = () => {
-  const { vehicles, trips, expenses, fuelLogs, resetAll } = useAppContext();
+  const { data: vehicles = [] } = useVehicles();
+  const { data: trips = [] } = useTrips();
+  const { data: expenses = [] } = useExpenses();
+  const { data: fuelLogs = [] } = useFuelLogs();
   const [activeReportTab, setActiveReportTab] = useState<'utilization' | 'cost' | 'fuel' | 'roi'>('utilization');
 
   // Helper function to convert data to CSV and trigger download
@@ -35,10 +38,10 @@ export const ReportsView = () => {
 
   // --- REPORT 1: Fleet Utilization ---
   const getUtilizationData = () => {
-    return vehicles.map(vehicle => {
-      const vehicleTrips = trips.filter(t => t.vehicleId === vehicle.id);
-      const completedTrips = vehicleTrips.filter(t => t.status === 'COMPLETED');
-      const totalDistance = completedTrips.reduce((sum, t) => sum + (t.distance || 0), 0);
+    return vehicles.map((vehicle: any) => {
+      const vehicleTrips = trips.filter((t: any) => t.vehicleId === vehicle.id);
+      const completedTrips = vehicleTrips.filter((t: any) => t.status === 'COMPLETED');
+      const totalDistance = completedTrips.reduce((sum: number, t: any) => sum + (t.distance || 0), 0);
       
       // Calculate active utilization score
       const totalTripsCount = trips.length || 1;
@@ -77,11 +80,11 @@ export const ReportsView = () => {
 
   // --- REPORT 2: Operational Cost ---
   const getCostData = () => {
-    return vehicles.map(vehicle => {
-      const vehicleExpenses = expenses.filter(e => e.vehicleId === vehicle.id);
-      const fuelCost = vehicleExpenses.filter(e => e.expenseType === 'Fuel').reduce((sum, e) => sum + e.amount, 0);
-      const maintenanceCost = vehicleExpenses.filter(e => e.expenseType === 'Maintenance').reduce((sum, e) => sum + e.amount, 0);
-      const otherCost = vehicleExpenses.filter(e => e.expenseType !== 'Fuel' && e.expenseType !== 'Maintenance').reduce((sum, e) => sum + e.amount, 0);
+    return vehicles.map((vehicle: any) => {
+      const vehicleExpenses = expenses.filter((e: any) => e.vehicleId === vehicle.id);
+      const fuelCost = vehicleExpenses.filter((e: any) => e.expenseType === 'Fuel').reduce((sum: number, e: any) => sum + e.amount, 0);
+      const maintenanceCost = vehicleExpenses.filter((e: any) => e.expenseType === 'Maintenance').reduce((sum: number, e: any) => sum + e.amount, 0);
+      const otherCost = vehicleExpenses.filter((e: any) => e.expenseType !== 'Fuel' && e.expenseType !== 'Maintenance').reduce((sum: number, e: any) => sum + e.amount, 0);
       const totalCost = fuelCost + maintenanceCost + otherCost;
 
       return {
@@ -113,13 +116,13 @@ export const ReportsView = () => {
 
   // --- REPORT 3: Fuel Efficiency ---
   const getFuelEfficiencyData = () => {
-    return vehicles.map(vehicle => {
-      const vehicleFuelLogs = fuelLogs.filter(fl => fl.vehicleId === vehicle.id);
-      const totalLiters = vehicleFuelLogs.reduce((sum, fl) => sum + fl.liters, 0);
-      const totalFuelCost = vehicleFuelLogs.reduce((sum, fl) => sum + fl.cost, 0);
+    return vehicles.map((vehicle: any) => {
+      const vehicleFuelLogs = fuelLogs.filter((fl: any) => fl.vehicleId === vehicle.id);
+      const totalLiters = vehicleFuelLogs.reduce((sum: number, fl: any) => sum + fl.liters, 0);
+      const totalFuelCost = vehicleFuelLogs.reduce((sum: number, fl: any) => sum + fl.cost, 0);
       
-      const vehicleTrips = trips.filter(t => t.vehicleId === vehicle.id && t.status === 'COMPLETED');
-      const totalDistance = vehicleTrips.reduce((sum, t) => sum + (t.distance || 0), 0);
+      const vehicleTrips = trips.filter((t: any) => t.vehicleId === vehicle.id && t.status === 'COMPLETED');
+      const totalDistance = vehicleTrips.reduce((sum: number, t: any) => sum + (t.distance || 0), 0);
       
       // Calculate efficiency: km per liter
       const efficiency = totalLiters > 0 ? parseFloat((totalDistance / totalLiters).toFixed(2)) : 0;
@@ -153,12 +156,12 @@ export const ReportsView = () => {
 
   // --- REPORT 4: Vehicle ROI ---
   const getROIData = () => {
-    return vehicles.map(vehicle => {
-      const vehicleExpenses = expenses.filter(e => e.vehicleId === vehicle.id);
-      const totalCost = vehicleExpenses.reduce((sum, e) => sum + e.amount, 0);
+    return vehicles.map((vehicle: any) => {
+      const vehicleExpenses = expenses.filter((e: any) => e.vehicleId === vehicle.id);
+      const totalCost = vehicleExpenses.reduce((sum: number, e: any) => sum + e.amount, 0);
       
-      const vehicleTrips = trips.filter(t => t.vehicleId === vehicle.id && t.status === 'COMPLETED');
-      const totalDistance = vehicleTrips.reduce((sum, t) => sum + (t.distance || 0), 0);
+      const vehicleTrips = trips.filter((t: any) => t.vehicleId === vehicle.id && t.status === 'COMPLETED');
+      const totalDistance = vehicleTrips.reduce((sum: number, t: any) => sum + (t.distance || 0), 0);
       
       // Assume a standard revenue model: 40 INR earned per kilometer traveled on completed cargo trips
       const estimatedRevenue = totalDistance * 40;

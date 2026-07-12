@@ -323,3 +323,64 @@ export const useAuditLogs = (filters?: any) => {
     staleTime: 2 * 60 * 1000,
   });
 };
+export const useDispatchTrip = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, driverId, vehicleId }: { id: string; driverId: string; vehicleId: string }) => {
+      const { data } = await apiClient.patch(`/trips/${id}/dispatch`, { driverId, vehicleId });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+    },
+  });
+};
+
+export const useCancelTrip = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { data } = await apiClient.patch(`/trips/${id}/cancel`, { reason });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+};
+
+export const useCompleteTrip = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, finalOdometer, fuelUsed }: { id: string; finalOdometer: number; fuelUsed?: number }) => {
+      const { data } = await apiClient.patch(`/trips/${id}/complete`, { finalOdometer, fuelUsed });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["trips"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["drivers"] });
+    },
+  });
+};
+
+export const useResolveMaintenance = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, cost }: { id: string; cost: number }) => {
+      const { data } = await apiClient.patch(`/maintenance/${id}/resolve`, { cost });
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["maintenance"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["vehicles"] });
+      queryClient.invalidateQueries({ queryKey: ["expenses"] });
+    },
+  });
+};
