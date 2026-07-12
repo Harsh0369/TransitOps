@@ -11,7 +11,11 @@ export class AuditService {
     entity: string,
     entityId: string,
     userId?: string,
-    metadata?: any
+    metadata?: any,
+    oldValue?: any,
+    newValue?: any,
+    reason?: string,
+    ipAddress?: string
   ) {
     try {
       await prisma.auditLog.create({
@@ -21,6 +25,10 @@ export class AuditService {
           entityId,
           userId,
           metadata: metadata ? JSON.parse(JSON.stringify(metadata)) : undefined,
+          oldValue: oldValue ? JSON.parse(JSON.stringify(oldValue)) : undefined,
+          newValue: newValue ? JSON.parse(JSON.stringify(newValue)) : undefined,
+          reason,
+          ipAddress
         },
       });
     } catch (error) {

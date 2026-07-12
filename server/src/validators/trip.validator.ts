@@ -11,6 +11,10 @@ export const createTripSchema = z.object({
 
 export const completeTripSchema = z.object({
   finalOdometer: z.number().positive('Final odometer must be positive'),
-  fuelUsed: z.number().positive('Fuel used must be positive'),
+  fuelUsed: z.number().min(0.1, 'Fuel used must be greater than 0'),
   completionNotes: z.string().optional(),
+});
+
+export const rejectTripSchema = z.object({
+  reason: z.string().min(1, 'Rejection reason is required'),
 });

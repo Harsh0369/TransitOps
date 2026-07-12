@@ -5,7 +5,8 @@ import { AuditService } from './audit.service';
 export class DriverService {
   async getAllDrivers() {
     return prisma.driver.findMany({
-      include: { user: { select: { email: true, role: true } } },
+      where: { deletedAt: null },
+      include: { user: { select: { name: true, email: true, phoneNumber: true } } },
       orderBy: { createdAt: 'desc' }
     });
   }

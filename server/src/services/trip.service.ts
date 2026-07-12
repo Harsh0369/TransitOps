@@ -5,7 +5,8 @@ import { AuditService } from './audit.service';
 export class TripService {
   async getAllTrips() {
     return prisma.trip.findMany({
-      include: { driver: true, vehicle: true },
+      where: { deletedAt: null },
+      include: { driver: { include: { user: true } }, vehicle: true },
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -15,7 +16,7 @@ export class TripService {
     if (!driver) throw new Error('No driver profile found for this user');
 
     return prisma.trip.findMany({
-      where: { driverId: driver.id },
+      where: { driverId: driver.id, deletedAt: null },
       include: { vehicle: true },
       orderBy: { createdAt: 'desc' }
     });
@@ -45,7 +46,7 @@ export class TripService {
 
       // 3. Log history
       await tx.tripStatusHistory.create({
-        data: { tripId: trip.id, status: 'DRAFT' }
+        data: { tripId: trip.id, status: 'DRAFT', changedBy: userId }
       });
 
       AuditService.log('TRIP_CREATED', 'Trip', trip.id, userId, { source: data.source, destination: data.destination });
@@ -54,7 +55,7 @@ export class TripService {
     });
   }
 
-  async dispatchTrip(tripId: string) {
+  async dispatchTrip(tripId: string, userId: string) {
     return prisma.$transaction(async (tx) => {
       const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { vehicle: true, driver: true } });
       if (!trip) throw new Error('Trip not found');
@@ -75,9 +76,14 @@ export class TripService {
       await tx.driver.update({ where: { id: trip.driverId }, data: { status: 'ON_TRIP' } });
 
       // 3. Log history
-      await tx.tripStatusHistory.create({ data: { tripId, status: 'DISPATCHED' } });
+      await tx.tripStatusHistory.create({ data: { tripId, status: 'DISPATCHED', previousStatus: 'DRAFT', changedBy: userId } });
       
-      AuditService.log('TRIP_DISPATCHED', 'Trip', tripId, undefined, { driverId: trip.driverId, vehicleId: trip.vehicleId });
+      AuditService.log('TRIP_DISPATCHED', 'Trip', tripId, userId, { driverId: trip.driverId, vehicleId: trip.vehicleId });
+
+      // Create Vehicle history
+      await tx.vehicleStatusHistory.create({
+        data: { vehicleId: trip.vehicleId, oldStatus: trip.vehicle.status, newStatus: 'ON_TRIP', changedBy: userId, remarks: 'Trip Dispatched' }
+      });
 
       return updatedTrip;
     });
@@ -87,7 +93,9 @@ export class TripService {
     return prisma.$transaction(async (tx) => {
       const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { driver: true } });
       if (!trip) throw new Error('Trip not found');
-      if (trip.status !== 'DISPATCHED') throw new Error('Only DISPATCHED trips can be completed');
+      if (trip.status !== 'DISPATCHED' && trip.status !== 'PENDING_APPROVAL') {
+        throw new Error('Only DISPATCHED or rejected PENDING_APPROVAL trips can be completed');
+      }
 
       // Only the assigned driver can complete it (unless admin/manager overrides, but let's enforce driver for now)
       // Actually, we should check if the user is a Fleet Manager OR the assigned driver.
@@ -104,21 +112,46 @@ export class TripService {
           finalOdometer,
           fuelUsed,
           completionNotes,
-          completionDate: new Date()
+          completionDate: new Date(),
+          // Clear rejection notes if they exist
+          rejectionReason: null,
+          rejectedBy: null,
+          rejectedAt: null
         }
       });
 
-      await tx.tripStatusHistory.create({ data: { tripId, status: 'PENDING_APPROVAL' } });
+      await tx.tripStatusHistory.create({ data: { tripId, status: 'PENDING_APPROVAL', previousStatus: trip.status, changedBy: userId } });
       AuditService.log('TRIP_PENDING_APPROVAL', 'Trip', tripId, userId, { finalOdometer, fuelUsed, completionNotes });
       return updatedTrip;
     });
   }
 
-  async approveTrip(tripId: string) {
+  async approveTrip(tripId: string, userId: string) {
     return prisma.$transaction(async (tx) => {
       const trip = await tx.trip.findUnique({ where: { id: tripId }, include: { vehicle: true } });
       if (!trip) throw new Error('Trip not found');
       if (trip.status !== 'PENDING_APPROVAL') throw new Error('Trip must be PENDING_APPROVAL to be approved');
+
+      if (!trip.finalOdometer || !trip.fuelUsed) throw new Error('Missing odometer or fuel data');
+
+      // Odometer validation
+      if (trip.finalOdometer <= trip.vehicle.odometer) {
+        throw new Error(`Submitted final odometer (${trip.finalOdometer}) must be greater than current vehicle odometer (${trip.vehicle.odometer})`);
+      }
+
+      if (trip.distance) {
+        const diff = trip.finalOdometer - trip.vehicle.odometer;
+        const maxExpected = trip.distance * 1.10; // 10% tolerance
+        const minExpected = trip.distance * 0.90;
+        if (diff > maxExpected || diff < minExpected) {
+          throw new Error(`Odometer difference (${diff}) deviates too much from expected distance (${trip.distance}). Tolerance is 10%.`);
+        }
+      }
+
+      // Fuel validation
+      if (trip.fuelUsed <= 0) {
+        throw new Error('Fuel used must be strictly greater than 0');
+      }
 
       // Update trip
       const updatedTrip = await tx.trip.update({
@@ -127,14 +160,19 @@ export class TripService {
       });
 
       // Free assets
+      const oldVehicleStatus = trip.vehicle.status;
       await tx.vehicle.update({
         where: { id: trip.vehicleId },
         data: { 
           status: 'AVAILABLE',
-          odometer: trip.finalOdometer || trip.vehicle.odometer // Update vehicle odometer!
+          odometer: trip.finalOdometer
         }
       });
       await tx.driver.update({ where: { id: trip.driverId }, data: { status: 'AVAILABLE' } });
+
+      await tx.vehicleStatusHistory.create({
+        data: { vehicleId: trip.vehicleId, oldStatus: oldVehicleStatus, newStatus: 'AVAILABLE', changedBy: userId, remarks: 'Trip Approved' }
+      });
 
       // Optional: Generate Fuel Log automatically
       if (trip.fuelUsed) {
@@ -150,8 +188,31 @@ export class TripService {
         });
       }
 
-      await tx.tripStatusHistory.create({ data: { tripId, status: 'COMPLETED' } });
-      AuditService.log('TRIP_APPROVED', 'Trip', tripId, undefined, { fuelCost: trip.fuelUsed ? trip.fuelUsed * 1.5 : 0 });
+      await tx.tripStatusHistory.create({ data: { tripId, status: 'COMPLETED', previousStatus: 'PENDING_APPROVAL', changedBy: userId } });
+      AuditService.log('TRIP_APPROVED', 'Trip', tripId, userId, { fuelCost: trip.fuelUsed ? trip.fuelUsed * 1.5 : 0 });
+      return updatedTrip;
+    });
+  }
+
+  async rejectTrip(tripId: string, reason: string, userId: string) {
+    return prisma.$transaction(async (tx) => {
+      const trip = await tx.trip.findUnique({ where: { id: tripId } });
+      if (!trip) throw new Error('Trip not found');
+      if (trip.status !== 'PENDING_APPROVAL') throw new Error('Only PENDING_APPROVAL trips can be rejected');
+
+      // Keep assets ON_TRIP, but update Trip
+      const updatedTrip = await tx.trip.update({
+        where: { id: tripId },
+        data: {
+          rejectionReason: reason,
+          rejectedBy: userId,
+          rejectedAt: new Date()
+          // Note: status remains PENDING_APPROVAL so the driver can resubmit over it
+        }
+      });
+
+      await tx.tripStatusHistory.create({ data: { tripId, status: 'PENDING_APPROVAL', previousStatus: 'PENDING_APPROVAL', changedBy: userId, remarks: `Rejected: ${reason}` } });
+      AuditService.log('TRIP_REJECTED', 'Trip', tripId, userId, { reason });
       return updatedTrip;
     });
   }
@@ -169,7 +230,13 @@ export class TripService {
 
       // If it was dispatched or pending, free the assets
       if (trip.status === 'DISPATCHED' || trip.status === 'PENDING_APPROVAL') {
-        await tx.vehicle.update({ where: { id: trip.vehicleId }, data: { status: 'AVAILABLE' } });
+        const v = await tx.vehicle.findUnique({ where: { id: trip.vehicleId } });
+        if (v) {
+          await tx.vehicle.update({ where: { id: trip.vehicleId }, data: { status: 'AVAILABLE' } });
+          await tx.vehicleStatusHistory.create({
+            data: { vehicleId: trip.vehicleId, oldStatus: v.status, newStatus: 'AVAILABLE', changedBy: userId, remarks: 'Trip Cancelled' }
+          });
+        }
         await tx.driver.update({ where: { id: trip.driverId }, data: { status: 'AVAILABLE' } });
       }
 
@@ -178,7 +245,7 @@ export class TripService {
         data: { status: 'CANCELLED' }
       });
       
-      await tx.tripStatusHistory.create({ data: { tripId, status: 'CANCELLED' } });
+      await tx.tripStatusHistory.create({ data: { tripId, status: 'CANCELLED', previousStatus: trip.status, changedBy: userId } });
       AuditService.log('TRIP_CANCELLED', 'Trip', tripId, userId, { previousStatus: trip.status });
       return updatedTrip;
     });

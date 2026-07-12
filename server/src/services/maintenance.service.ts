@@ -11,8 +11,16 @@ export class MaintenanceService {
       const vehicle = await tx.vehicle.findUnique({ where: { id: data.vehicleId } });
       if (!vehicle) throw new Error('Vehicle not found');
       
-      if (vehicle.status !== 'AVAILABLE') {
+      if (vehicle.status === 'IN_SHOP' || vehicle.status === 'RETIRED') {
         throw new Error(`Vehicle cannot go into maintenance because its status is ${vehicle.status}`);
+      }
+
+      // Check for active maintenance
+      const activeMaint = await tx.maintenance.findFirst({
+        where: { vehicleId: vehicle.id, status: 'OPEN' }
+      });
+      if (activeMaint) {
+        throw new Error('Vehicle already has an active maintenance record');
       }
 
       const maintenance = await tx.maintenance.create({
@@ -26,6 +34,10 @@ export class MaintenanceService {
       await tx.vehicle.update({
         where: { id: vehicle.id },
         data: { status: 'IN_SHOP' }
+      });
+
+      await tx.vehicleStatusHistory.create({
+        data: { vehicleId: vehicle.id, oldStatus: vehicle.status, newStatus: 'IN_SHOP', changedBy: userId, remarks: 'Maintenance Started' }
       });
 
       AuditService.log('MAINTENANCE_STARTED', 'Maintenance', maintenance.id, userId, { vehicleId: vehicle.id });
@@ -53,6 +65,10 @@ export class MaintenanceService {
         await tx.vehicle.update({
           where: { id: maintenance.vehicleId },
           data: { status: 'AVAILABLE' }
+        });
+
+        await tx.vehicleStatusHistory.create({
+          data: { vehicleId: maintenance.vehicleId, oldStatus: maintenance.vehicle.status, newStatus: 'AVAILABLE', changedBy: userId, remarks: 'Maintenance Closed' }
         });
       }
 

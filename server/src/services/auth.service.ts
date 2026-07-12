@@ -48,7 +48,15 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new Error('Invalid email or password');
+    }
+
+    if (user.status !== 'ACTIVE') {
+      throw new Error(`Account is ${user.status}. Please contact the Fleet Manager.`);
+    }
+
+    if (user.deletedAt) {
+      throw new Error('Account has been deleted');
     }
 
     const isPasswordValid = await bcrypt.compare(passwordRaw, user.password);

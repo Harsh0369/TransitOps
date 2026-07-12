@@ -5,6 +5,7 @@ import { AuditService } from './audit.service';
 export class VehicleService {
   async getAllVehicles() {
     return prisma.vehicle.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: 'desc' }
     });
   }
@@ -31,29 +32,49 @@ export class VehicleService {
     return newVehicle;
   }
 
-  async updateVehicle(id: string, data: any) {
+  async updateVehicle(id: string, data: any, userId: string = 'SYSTEM') {
+    const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle) throw new Error('Vehicle not found');
+    if (vehicle.status === 'RETIRED') throw new Error('Cannot edit a RETIRED vehicle');
+
     const updated = await prisma.vehicle.update({
       where: { id },
       data,
     });
-    AuditService.log('VEHICLE_UPDATED', 'Vehicle', id, undefined, { updatedFields: Object.keys(data) });
+    AuditService.log('VEHICLE_UPDATED', 'Vehicle', id, userId, { updatedFields: Object.keys(data) });
     return updated;
   }
 
-  async retireVehicle(id: string) {
-    // Hard deletes are generally bad in ERPs, so we use status transitions
-    return prisma.vehicle.update({
+  async retireVehicle(id: string, userId: string = 'SYSTEM') {
+    const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle) throw new Error('Vehicle not found');
+
+    const updated = await prisma.vehicle.update({
       where: { id },
       data: { status: 'RETIRED' }
     });
+    await prisma.vehicleStatusHistory.create({
+      data: { vehicleId: id, oldStatus: vehicle.status, newStatus: 'RETIRED', changedBy: userId, remarks: 'Vehicle Retired' }
+    });
+    return updated;
   }
 
-  async updateStatus(id: string, status: VehicleStatus) {
+  async updateStatus(id: string, status: VehicleStatus, userId: string = 'SYSTEM') {
+    const vehicle = await prisma.vehicle.findUnique({ where: { id } });
+    if (!vehicle) throw new Error('Vehicle not found');
+    
+    if (vehicle.status === 'RETIRED') {
+      throw new Error('Cannot change status of a RETIRED vehicle');
+    }
+
     const updated = await prisma.vehicle.update({
       where: { id },
       data: { status },
     });
-    AuditService.log('VEHICLE_STATUS_CHANGED', 'Vehicle', id, undefined, { status });
+    await prisma.vehicleStatusHistory.create({
+      data: { vehicleId: id, oldStatus: vehicle.status, newStatus: status, changedBy: userId, remarks: 'Manual Override' }
+    });
+    AuditService.log('VEHICLE_STATUS_CHANGED', 'Vehicle', id, userId, { status });
     return updated;
   }
 }
