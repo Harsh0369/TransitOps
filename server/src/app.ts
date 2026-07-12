@@ -13,7 +13,10 @@ import financeRoute from './routes/finance.route';
 import complianceRoute from './routes/compliance.route';
 import dashboardRoute from './routes/dashboard.route';
 import sampleRoute from './routes/sample.route';
+import auditRoute from './routes/audit.route';
+import uploadRoute from './routes/upload.route';
 import { globalErrorMiddleware, notFoundMiddleware } from './middlewares/error.middleware';
+import path from 'path';
 
 const app = express();
 
@@ -35,9 +38,13 @@ app.use('/api/maintenance', maintenanceRoute);
 app.use('/api/finance', financeRoute);
 app.use('/api/compliance', complianceRoute);
 app.use('/api/dashboard', dashboardRoute);
+app.use('/api/audit', auditRoute);
+app.use('/api/upload', uploadRoute);
 app.use('/api/sample', sampleRoute);
 
-// Error Handling
+// Serve static uploads
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+
 app.use(notFoundMiddleware);
 app.use(globalErrorMiddleware);
 
