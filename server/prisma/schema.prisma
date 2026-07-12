@@ -29,6 +29,13 @@ enum VehicleStatus {
   RETIRED
 }
 
+enum ComplianceType {
+  INSURANCE
+  PUC
+  FITNESS
+  REGISTRATION
+}
+
 enum DriverStatus {
   AVAILABLE
   ON_TRIP
@@ -85,6 +92,7 @@ model Vehicle {
   fuelLogs      FuelLog[]
   expenses      Expense[]
   statusHistory VehicleStatusHistory[]
+  compliances   VehicleCompliance[]
 }
 
 model Driver {
@@ -201,6 +209,24 @@ model VehicleStatusHistory {
   changedAt DateTime      @default(now())
 
   vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+}
+
+model VehicleCompliance {
+  id                String         @id @default(uuid())
+  vehicleId         String
+  type              ComplianceType
+  certificateNumber String
+  issueDate         DateTime
+  expiryDate        DateTime
+  remarks           String?
+  createdBy         String?
+  updatedBy         String?
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+
+  @@unique([vehicleId, type])
 }
 
 model AuditLog {

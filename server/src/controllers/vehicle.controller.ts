@@ -8,8 +8,21 @@ export class VehicleController {
   
   static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const vehicles = await vehicleService.getAllVehicles();
+      const filters = {
+        roadworthy: req.query.roadworthy === 'true' ? true : req.query.roadworthy === 'false' ? false : undefined,
+        complianceStatus: req.query.complianceStatus ? JSON.parse(req.query.complianceStatus as string) : undefined
+      };
+      const vehicles = await vehicleService.getAllVehicles(filters);
       res.status(200).json(successResponse('Vehicles retrieved successfully', vehicles));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getDashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      const dashboard = await vehicleService.getComplianceDashboard();
+      res.status(200).json(successResponse('Compliance dashboard retrieved', dashboard));
     } catch (error) {
       next(error);
     }

@@ -16,6 +16,7 @@ router.delete('/:id', authorize(['FLEET_MANAGER', 'ADMIN']), VehicleController.r
 
 // Everyone can view vehicles
 router.get('/', VehicleController.getAll);
+router.get('/compliance-dashboard', authorize(['FLEET_MANAGER', 'ADMIN', 'SAFETY_OFFICER']), VehicleController.getDashboard);
 router.get('/:id', VehicleController.getById);
 
 export default router;
