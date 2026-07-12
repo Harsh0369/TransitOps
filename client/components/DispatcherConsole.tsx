@@ -38,6 +38,40 @@ export const DispatcherConsole = () => {
   const [endTime, setEndTime] = useState('');
   const [step, setStep] = useState<number>(0); // 0: Draft, 1: Dispatched, 2: In-Transit, 3: Completed (visual stepper)
 
+  // Document Expiration checks
+  const selectedVehicleObj = vehicles.find(v => v.id === selectedVehicleId);
+
+  const checkDocStatus = (expiryDateStr?: string) => {
+    if (!expiryDateStr) return { status: 'VALID', text: 'Valid', daysLeft: 999 };
+    const today = new Date('2026-07-12T00:00:00Z');
+    const expiry = new Date(expiryDateStr);
+    const diffTime = expiry.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return { status: 'EXPIRED', text: 'Expired', daysLeft: diffDays };
+    } else if (diffDays <= 30) {
+      return { status: 'EXPIRING_SOON', text: `Expiring soon`, daysLeft: diffDays };
+    } else {
+      return { status: 'VALID', text: 'Valid', daysLeft: diffDays };
+    }
+  };
+
+  const insStatus = checkDocStatus(selectedVehicleObj?.insuranceExpiry);
+  const fitStatus = checkDocStatus(selectedVehicleObj?.fitnessExpiry);
+  const polStatus = checkDocStatus(selectedVehicleObj?.pollutionExpiry);
+
+  const isInsuranceExpired = insStatus.status === 'EXPIRED';
+  const isFitnessExpired = fitStatus.status === 'EXPIRED';
+  const isPollutionExpired = polStatus.status === 'EXPIRED';
+  
+  const isInsuranceExpiringSoon = insStatus.status === 'EXPIRING_SOON';
+  const isFitnessExpiringSoon = fitStatus.status === 'EXPIRING_SOON';
+  const isPollutionExpiringSoon = polStatus.status === 'EXPIRING_SOON';
+
+  const hasExpiredDocs = isInsuranceExpired || isFitnessExpired || isPollutionExpired;
+  const hasExpiringSoonDocs = isInsuranceExpiringSoon || isFitnessExpiringSoon || isPollutionExpiringSoon;
+
   // Validation
   const [capacityError, setCapacityError] = useState(false);
   const [exceededAmount, setExceededAmount] = useState(0);
@@ -80,7 +114,7 @@ export const DispatcherConsole = () => {
 
   const handleSubmit = (e: React.FormEvent, isDraft = false) => {
     e.preventDefault();
-    if (capacityError && !isDraft) return; // Block dispatch if capacity exceeded
+    if ((capacityError || hasExpiredDocs) && !isDraft) return; // Block dispatch if capacity exceeded or documents expired
 
     const veh = vehicles.find(v => v.id === selectedVehicleId);
     const drv = drivers.find(d => d.id === selectedDriverId);
@@ -257,18 +291,54 @@ export const DispatcherConsole = () => {
             <div className="space-y-1">
               <label className="text-xs font-bold text-zinc-500">Vehicle Assignment</label>
               {availableVehicles.length > 0 ? (
-                <select
-                  required
-                  value={selectedVehicleId}
-                  onChange={(e) => setSelectedVehicleId(e.target.value)}
-                  className="w-full px-3.5 py-2 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 bg-zinc-50/50 cursor-pointer"
-                >
-                  {availableVehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name} ({v.type}) - Max Cap: {v.capacity} kg
-                    </option>
-                  ))}
-                </select>
+                <>
+                  <select
+                    required
+                    value={selectedVehicleId}
+                    onChange={(e) => setSelectedVehicleId(e.target.value)}
+                    className="w-full px-3.5 py-2 border border-zinc-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500 bg-zinc-50/50 cursor-pointer"
+                  >
+                    {availableVehicles.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} ({v.type}) - Max Cap: {v.capacity} kg
+                      </option>
+                    ))}
+                  </select>
+                  {selectedVehicleObj && (
+                    <div className="grid grid-cols-3 gap-2 mt-2 p-3 bg-zinc-50 rounded-xl border border-zinc-200 text-[10px] font-semibold text-zinc-500">
+                      <div className="space-y-0.5">
+                        <span className="block text-[9px] uppercase font-bold text-zinc-400">Insurance</span>
+                        <span className={`inline-block px-1.5 py-0.5 rounded-md ${
+                          isInsuranceExpired ? 'bg-rose-50 text-rose-700 border border-rose-100 font-bold' :
+                          isInsuranceExpiringSoon ? 'bg-amber-50 text-amber-700 border border-amber-100 font-bold' :
+                          'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                        }`}>
+                          {selectedVehicleObj.insuranceExpiry || 'N/A'} {isInsuranceExpired && '(Expired)'}
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="block text-[9px] uppercase font-bold text-zinc-400">Fitness Cert</span>
+                        <span className={`inline-block px-1.5 py-0.5 rounded-md ${
+                          isFitnessExpired ? 'bg-rose-50 text-rose-700 border border-rose-100 font-bold' :
+                          isFitnessExpiringSoon ? 'bg-amber-50 text-amber-700 border border-amber-100 font-bold' :
+                          'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                        }`}>
+                          {selectedVehicleObj.fitnessExpiry || 'N/A'} {isFitnessExpired && '(Expired)'}
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="block text-[9px] uppercase font-bold text-zinc-400">Pollution (PUC)</span>
+                        <span className={`inline-block px-1.5 py-0.5 rounded-md ${
+                          isPollutionExpired ? 'bg-rose-50 text-rose-700 border border-rose-100 font-bold' :
+                          isPollutionExpiringSoon ? 'bg-amber-50 text-amber-700 border border-amber-100 font-bold' :
+                          'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                        }`}>
+                          {selectedVehicleObj.pollutionExpiry || 'N/A'} {isPollutionExpired && '(Expired)'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 flex gap-2 items-center">
                   <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -365,13 +435,59 @@ export const DispatcherConsole = () => {
               </div>
             )}
 
+            {/* Legal Documents Expiration Blocked Box */}
+            {hasExpiredDocs && (
+              <div className="p-4 bg-rose-50 border border-rose-100 text-rose-700 rounded-xl text-xs flex gap-3 items-start animate-shake">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                <div>
+                  <span className="font-bold text-rose-800">Dispatch Blocked - Expired Legal Documents!</span>
+                  <p className="mt-1 leading-normal text-[11px] space-y-1">
+                    The selected vehicle (<span className="font-bold">{selectedVehicleObj?.name}</span>) has expired legal certificates:
+                    {isInsuranceExpired && (
+                      <span className="block text-rose-900">• Insurance Expired: <span className="font-bold">{selectedVehicleObj?.insuranceExpiry}</span> ({Math.abs(insStatus.daysLeft)} days ago)</span>
+                    )}
+                    {isFitnessExpired && (
+                      <span className="block text-rose-900">• Fitness Certificate Expired: <span className="font-bold">{selectedVehicleObj?.fitnessExpiry}</span> ({Math.abs(fitStatus.daysLeft)} days ago)</span>
+                    )}
+                    {isPollutionExpired && (
+                      <span className="block text-rose-900">• Pollution Certificate (PUC) Expired: <span className="font-bold">{selectedVehicleObj?.pollutionExpiry}</span> ({Math.abs(polStatus.daysLeft)} days ago)</span>
+                    )}
+                    <span className="block mt-2 font-medium text-rose-800">Please renew these certificates or assign a different vehicle to this trip.</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Legal Documents Expiring Soon Warning Box */}
+            {hasExpiringSoonDocs && !hasExpiredDocs && (
+              <div className="p-4 bg-amber-50 border border-amber-100 text-amber-700 rounded-xl text-xs flex gap-3 items-start">
+                <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                <div>
+                  <span className="font-bold text-amber-800">Warning: Document Expiration Approaching</span>
+                  <p className="mt-1 leading-normal text-[11px] space-y-1">
+                    The selected vehicle (<span className="font-bold">{selectedVehicleObj?.name}</span>) has certificates expiring soon:
+                    {isInsuranceExpiringSoon && (
+                      <span className="block text-amber-900">• Insurance Expiration: <span className="font-bold">{selectedVehicleObj?.insuranceExpiry}</span> ({insStatus.daysLeft} days remaining)</span>
+                    )}
+                    {isFitnessExpiringSoon && (
+                      <span className="block text-amber-900">• Fitness Certificate Expiration: <span className="font-bold">{selectedVehicleObj?.fitnessExpiry}</span> ({fitStatus.daysLeft} days remaining)</span>
+                    )}
+                    {isPollutionExpiringSoon && (
+                      <span className="block text-amber-900">• Pollution Certificate (PUC) Expiration: <span className="font-bold">{selectedVehicleObj?.pollutionExpiry}</span> ({polStatus.daysLeft} days remaining)</span>
+                    )}
+                    <span className="block mt-2 font-medium text-amber-800">Ensure renewal is scheduled within the week to avoid future dispatch blocks.</span>
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex gap-3 pt-2">
               <button
                 type="submit"
-                disabled={capacityError || !selectedVehicleId || !selectedDriverId}
+                disabled={capacityError || hasExpiredDocs || !selectedVehicleId || !selectedDriverId}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-150 cursor-pointer ${
-                  capacityError || !selectedVehicleId || !selectedDriverId
+                  capacityError || hasExpiredDocs || !selectedVehicleId || !selectedDriverId
                     ? 'bg-zinc-100 text-zinc-400 border border-zinc-200 cursor-not-allowed'
                     : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-600/10 active:scale-[0.98]'
                 }`}
