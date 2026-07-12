@@ -61,14 +61,14 @@ export const DashboardView = () => {
   if (kpisLoading) return <LoadingSpinner />;
   if (kpisError) return <ErrorState error={kpisError as Error} />;
 
-  const kpiValues = kpis || {
-    activeVehicles: 0,
-    availableVehicles: 0,
-    inMaintenance: 0,
-    activeTrips: 0,
-    pendingTrips: 0,
-    driversOnDuty: 0,
-    fleetUtilization: 0
+  const kpiValues = {
+    activeVehicles: kpis?.vehicles?.active ?? 0,
+    availableVehicles: kpis?.vehicles?.available ?? 0,
+    inMaintenance: kpis?.vehicles?.inShop ?? 0,
+    activeTrips: kpis?.trips?.active ?? 0,
+    pendingTrips: kpis?.trips?.pending ?? 0,
+    driversOnDuty: kpis?.drivers?.onDuty ?? 0,
+    fleetUtilization: kpis?.fleetUtilizationPercentage ?? 0
   };
 
   return (
