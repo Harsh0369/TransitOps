@@ -44,6 +44,7 @@ enum MaintenanceStatus {
 
 model User {
   id        String   @id @default(uuid())
+  name      String
   email     String   @unique
   password  String
   role      Role     @default(FLEET_MANAGER)
