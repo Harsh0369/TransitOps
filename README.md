@@ -12,11 +12,7 @@ This project was built as part of a software engineering hackathon with a heavy 
 
 Both our Local and Neon (Cloud) PostgreSQL databases have been seeded with extensive, varied data (100+ vehicles, 75 drivers, 400+ trips, rich audit logs, maintenance records, and fuel histories). 
 
-### Live Database URLs
-- **Local DB**: `postgresql://postgres:postgres@localhost:5432/transitops` (Default for local testing)
-- **Neon Cloud DB**: `postgresql://neondb_owner:npg_TyWl0Zgs7miw@ep-solitary-meadow-aojub0st.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require`
 
-*(To switch between them, update the `DATABASE_URL` in `server/.env` and restart the backend).*
 
 ### Role-Based Access Control (Demo Credentials)
 We've implemented Role-Based Access Control (RBAC) across the app. We recommend trying out these demo accounts to see how the views and permissions change:
