@@ -4,49 +4,30 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Truck, 
-  Route, 
-  ShieldCheck, 
-  PieChart, 
   Mail, 
   Lock, 
   EyeOff,
   Eye,
-  LogIn
+  LogIn,
+  Loader
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { Role } from "@/types/auth";
 
 export default function LoginPage() {
-  const [selectedRole, setSelectedRole] = useState<Role>("Fleet Manager");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const { login } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, error: authError } = useAuth();
 
-  const roles = [
-    {
-      id: "Fleet Manager",
-      icon: <Truck className="w-5 h-5" />,
-      title: "Fleet Manager",
-      description: "Manage fleet assets, vehicles and maintenance."
-    },
-    {
-      id: "Dispatcher",
-      icon: <Route className="w-5 h-5" />,
-      title: "Dispatcher",
-      description: "Create, dispatch and monitor transport trips."
-    },
-    {
-      id: "Safety Officer",
-      icon: <ShieldCheck className="w-5 h-5" />,
-      title: "Safety Officer",
-      description: "Monitor licenses, compliance and safety scores."
-    },
-    {
-      id: "Financial Analyst",
-      icon: <PieChart className="w-5 h-5" />,
-      title: "Financial Analyst",
-      description: "Track fuel, expenses, profitability and ROI."
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    const result = await login(email, password);
+    if (!result.success) {
+      setIsLoading(false);
     }
-  ];
+  };
 
   return (
     <div className="flex min-h-screen bg-[#09090b] text-white font-sans">
@@ -111,7 +92,7 @@ export default function LoginPage() {
             <p className="text-zinc-400">Enter your credentials to continue</p>
           </div>
 
-          <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); login(selectedRole); }}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Email</label>
               <div className="relative group">
@@ -119,9 +100,13 @@ export default function LoginPage() {
                   <Mail className="h-4 w-4 text-zinc-500 group-focus-within:text-amber-500 transition-colors" />
                 </div>
                 <input 
-                  type="email" 
-                  className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-sm"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="raven.k@transitops.in"
+                  required
                 />
               </div>
             </div>
@@ -134,13 +119,18 @@ export default function LoginPage() {
                 </div>
                 <input 
                   type={showPassword ? "text" : "password"}
-                  className="w-full pl-10 pr-12 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-sm"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-12 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50 focus:border-amber-500 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="••••••••"
+                  required
                 />
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors"
+                  disabled={isLoading}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors disabled:opacity-50"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -160,63 +150,35 @@ export default function LoginPage() {
               </a>
             </div>
 
-            {/* Error Alert Box mock */}
-            <div className="p-3.5 rounded-xl border border-red-500/20 bg-red-950/40 flex items-start gap-3 mt-4">
-              <div className="w-2.5 h-2.5 mt-1 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] shrink-0" />
-              <div>
-                <h4 className="text-[13px] font-semibold text-red-200">INVALID CREDENTIALS</h4>
-                <p className="text-[11px] text-red-300/80 mt-0.5">Account will be locked after 5 failed attempts.</p>
+            {/* Error Alert Box */}
+            {authError && (
+              <div className="p-3.5 rounded-xl border border-red-500/20 bg-red-950/40 flex items-start gap-3 mt-4">
+                <div className="w-2.5 h-2.5 mt-1 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)] shrink-0" />
+                <div>
+                  <h4 className="text-[13px] font-semibold text-red-200">LOGIN ERROR</h4>
+                  <p className="text-[11px] text-red-300/80 mt-0.5">{authError}</p>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Role Selection */}
-            <div className="pt-2">
-              <label className="block text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                Select Your Role
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {roles.map((role) => {
-                  const isSelected = selectedRole === role.id;
-                  return (
-                    <motion.div
-                      key={role.id}
-                      onClick={() => setSelectedRole(role.id as Role)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`cursor-pointer rounded-xl p-3 border transition-all duration-300 ${
-                        isSelected 
-                          ? "bg-amber-500/10 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.15)]" 
-                          : "bg-zinc-900/50 border-zinc-800 hover:bg-zinc-900 hover:border-zinc-700"
-                      }`}
-                    >
-                      <div className="flex items-start gap-2.5">
-                        <div className={`mt-0.5 ${isSelected ? "text-amber-500" : "text-zinc-500"}`}>
-                          {role.icon}
-                        </div>
-                        <div>
-                          <h4 className={`text-sm font-medium ${isSelected ? "text-amber-500" : "text-zinc-200"}`}>
-                            {role.title}
-                          </h4>
-                          <p className="text-[10px] text-zinc-500 leading-tight mt-1">
-                            {role.description}
-                          </p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-              <p className="text-[11px] text-zinc-500 mt-3 text-center sm:text-left">
-                Your dashboard and permissions are determined by the selected role.
-              </p>
-            </div>
+
 
             <button 
               type="submit"
-              className="w-full flex items-center justify-center gap-2 py-3 mt-4 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:shadow-[0_0_25px_rgba(245,158,11,0.3)] transition-all active:scale-[0.98]"
+              disabled={isLoading}
+              className="w-full flex items-center justify-center gap-2 py-3 mt-4 bg-amber-500 hover:bg-amber-400 text-black font-semibold rounded-xl shadow-[0_0_20px_rgba(245,158,11,0.2)] hover:shadow-[0_0_25px_rgba(245,158,11,0.3)] transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Sign In
-              <LogIn className="w-4 h-4" />
+              {isLoading ? (
+                <>
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign In
+                  <LogIn className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 
