@@ -14,6 +14,7 @@ import { ExpensesView } from '../components/ExpensesView';
 import { AnalyticsView } from '../components/AnalyticsView';
 import { SettingsView } from '../components/SettingsView';
 import { AuditLogsView } from '../components/AuditLogsView';
+import { ReportsView } from '../components/ReportsView';
 import { redirect } from 'next/navigation';
 
 export function Home() {
@@ -37,6 +38,8 @@ export function Home() {
         return <ExpensesView />;
       case 'analytics':
         return <AnalyticsView />;
+      case 'reports':
+        return <ReportsView />;
       case 'audit-logs':
         return <AuditLogsView />;
       case 'settings':
