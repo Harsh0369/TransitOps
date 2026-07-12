@@ -42,16 +42,53 @@ export class TripService {
 
   async createTrip(data: any, userId: string) {
     return prisma.$transaction(async (tx) => {
+      const reasons: Record<string, string> = {};
+      let isValid = true;
+
       // 1. Validation checks
       const vehicle = await tx.vehicle.findUnique({ where: { id: data.vehicleId } });
-      if (!vehicle) throw new Error('Vehicle not found');
-      if (vehicle.status === 'RETIRED' || vehicle.status === 'IN_SHOP') throw new Error('Vehicle is unavailable (Retired or In Shop)');
-      if (data.cargoWeight > vehicle.capacity) throw new Error(`Cargo weight exceeds vehicle capacity of ${vehicle.capacity}`);
+      if (!vehicle) {
+        reasons['Vehicle'] = 'Not found';
+        isValid = false;
+      } else {
+        if (vehicle.status === 'RETIRED' || vehicle.status === 'IN_SHOP') {
+           reasons['Vehicle Status'] = `Unavailable (${vehicle.status})`;
+           isValid = false;
+        } else {
+           reasons['Vehicle Status'] = 'Available';
+        }
+        if (data.cargoWeight > vehicle.capacity) {
+           reasons['Capacity'] = `Cargo weight (${data.cargoWeight}) exceeds capacity (${vehicle.capacity})`;
+           isValid = false;
+        } else {
+           reasons['Capacity'] = 'Valid';
+        }
+      }
 
       const driver = await tx.driver.findUnique({ where: { id: data.driverId } });
-      if (!driver) throw new Error('Driver not found');
-      if (driver.status === 'SUSPENDED') throw new Error('Driver is suspended');
-      if (new Date(driver.licenseExpiry) < new Date()) throw new Error('Driver license is expired');
+      if (!driver) {
+        reasons['Driver'] = 'Not found';
+        isValid = false;
+      } else {
+        if (driver.status === 'SUSPENDED') {
+           reasons['Driver Status'] = 'Suspended';
+           isValid = false;
+        } else {
+           reasons['Driver Status'] = 'Active';
+        }
+        if (new Date(driver.licenseExpiry) < new Date()) {
+           reasons['License'] = 'Expired';
+           isValid = false;
+        } else {
+           reasons['License'] = 'Valid';
+        }
+      }
+
+      if (!isValid) {
+        const error = new Error('Trip creation blocked due to validation failures.');
+        (error as any).reasons = reasons;
+        throw error;
+      }
 
       // 2. Create the trip in DRAFT
       const trip = await tx.trip.create({
@@ -80,23 +117,51 @@ export class TripService {
       if (trip.status !== 'DRAFT') throw new Error('Only DRAFT trips can be dispatched');
 
       // Compliance validation check
+      const reasons: Record<string, string> = {};
+      let isValid = true;
       const now = Date.now();
       const requiredTypes = ['INSURANCE', 'PUC', 'FITNESS', 'REGISTRATION'];
       for (const type of requiredTypes) {
         const comp = trip.vehicle.compliances.find((c: any) => c.type === type);
         if (!comp) {
-          throw new Error(`Vehicle ${type.toLowerCase()} certificate is missing. Vehicle is not roadworthy.`);
-        }
-        if (now > new Date(comp.expiryDate).getTime()) {
-          throw new Error(`Vehicle ${type.toLowerCase()} has expired. Vehicle is not roadworthy.`);
+          reasons[`Compliance: ${type}`] = 'Missing';
+          isValid = false;
+        } else if (now > new Date(comp.expiryDate).getTime()) {
+          reasons[`Compliance: ${type}`] = 'Expired';
+          isValid = false;
+        } else {
+          reasons[`Compliance: ${type}`] = 'Valid';
         }
       }
 
-      if (trip.vehicle.status === 'IN_SHOP') throw new Error('Vehicle is currently IN_SHOP and not roadworthy.');
-      if (trip.vehicle.status === 'RETIRED') throw new Error('Vehicle is RETIRED and not roadworthy.');
+      if (trip.vehicle.status === 'IN_SHOP') {
+        reasons['Vehicle Status'] = 'IN_SHOP';
+        isValid = false;
+      } else if (trip.vehicle.status === 'RETIRED') {
+        reasons['Vehicle Status'] = 'RETIRED';
+        isValid = false;
+      } else if (trip.vehicle.status === 'ON_TRIP') {
+        reasons['Vehicle Status'] = 'ON_TRIP';
+        isValid = false;
+      } else {
+        reasons['Vehicle Status'] = 'Valid';
+      }
 
-      if (trip.vehicle.status === 'ON_TRIP') throw new Error('Vehicle is already ON_TRIP');
-      if (trip.driver.status === 'ON_TRIP') throw new Error('Driver is already ON_TRIP');
+      if (trip.driver.status === 'ON_TRIP') {
+        reasons['Driver Status'] = 'ON_TRIP';
+        isValid = false;
+      } else if (trip.driver.status === 'SUSPENDED') {
+        reasons['Driver Status'] = 'SUSPENDED';
+        isValid = false;
+      } else {
+        reasons['Driver Status'] = 'Valid';
+      }
+
+      if (!isValid) {
+        const err = new Error('Dispatch Blocked');
+        (err as any).reasons = reasons;
+        throw err;
+      }
 
       // 1. Update trip status
       const updatedTrip = await tx.trip.update({

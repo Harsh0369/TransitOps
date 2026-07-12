@@ -84,4 +84,13 @@ export class VehicleController {
       next(error);
     }
   }
+
+  static async getTimeline(req: Request, res: Response, next: NextFunction) {
+    try {
+      const timeline = await vehicleService.getTimeline(req.params.id as string);
+      res.status(200).json(successResponse('Timeline retrieved successfully', timeline));
+    } catch (error) {
+      next(error);
+    }
+  }
 }

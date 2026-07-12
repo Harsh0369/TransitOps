@@ -7,6 +7,12 @@ export interface QueryOptions {
   sortBy: string;
   sortOrder: 'asc' | 'desc';
   exportData?: boolean;
+  entity?: string;
+  action?: string;
+  userId?: string;
+  entityId?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export class QueryUtil {
@@ -20,7 +26,14 @@ export class QueryUtil {
     
     const exportData = req.query.export === 'csv';
 
-    return { page, limit, skip, sortBy, sortOrder, exportData };
+    const entity = req.query.entity as string;
+    const action = req.query.action as string;
+    const userId = req.query.userId as string;
+    const entityId = req.query.entityId as string;
+    const startDate = req.query.startDate as string;
+    const endDate = req.query.endDate as string;
+
+    return { page, limit, skip, sortBy, sortOrder, exportData, entity, action, userId, entityId, startDate, endDate };
   }
 
   static getPaginationMeta(total: number, options: QueryOptions) {

@@ -6,9 +6,17 @@ export const notFoundMiddleware = (req: Request, res: Response, next: NextFuncti
 };
 
 export const globalErrorMiddleware = (err: Error, req: Request, res: Response, next: NextFunction) => {
-  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
-  res.status(statusCode).json({
+  const isValidation = !!(err as any).reasons;
+  const statusCode = isValidation ? 400 : (res.statusCode === 200 ? 500 : res.statusCode);
+  
+  const response: any = {
     message: err.message,
     stack: env.NODE_ENV === 'production' ? null : err.stack,
-  });
+  };
+
+  if (isValidation) {
+    response.reasons = (err as any).reasons;
+  }
+
+  res.status(statusCode).json(response);
 };

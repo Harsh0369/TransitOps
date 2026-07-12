@@ -3,7 +3,18 @@ import { QueryOptions } from '../utils/query.util';
 
 export class AuditService {
   async getLogs(options?: QueryOptions) {
-    const where = {};
+    const where: any = {};
+    if (options) {
+      if (options.entity) where.entity = options.entity;
+      if (options.action) where.action = options.action;
+      if (options.userId) where.userId = options.userId;
+      if (options.entityId) where.entityId = options.entityId;
+      if (options.startDate || options.endDate) {
+        where.timestamp = {};
+        if (options.startDate) where.timestamp.gte = new Date(options.startDate);
+        if (options.endDate) where.timestamp.lte = new Date(options.endDate);
+      }
+    }
     
     if (options && options.exportData) {
       return prisma.auditLog.findMany({ where, include: { user: { select: { name: true, email: true } } }, orderBy: { [options.sortBy]: options.sortOrder } });
