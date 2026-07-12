@@ -1,6 +1,7 @@
 # TransitOps
 
-TransitOps is a Transport Operations ERP for managing fleets, drivers, and trips. We are currently building this as part of a hackathon.
+TransitOps is a modern Transport Operations ERP designed to streamline and digitize fleet management workflows for logistics and transportation businesses.
+ We are currently building this as part of a hackathon.
 
 ## Structure
 - `client/` - Next.js frontend (WIP)
