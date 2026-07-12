@@ -4,7 +4,14 @@ TransitOps is a modern Transport Operations ERP designed to streamline and digit
 The platform provides centralized management of vehicles, drivers, trips, maintenance schedules, fuel records, and operational expenses while enforcing critical business rules throughout the transport lifecycle.
 Built as a pat of a software engineering hackathon, TransitOps emphasizes on clean architecture, scalability, data integrity, and an intuitive user experience.
 
-##Key Features:
+## Demo Accounts
+Use the following credentials to test different RBAC views:
+- **Fleet Manager**: `fleet@demo.com` / `Password123`
+- **Driver**: `driver@demo.com` / `Password123`
+- **Safety Officer**: `safety@demo.com` / `Password123`
+- **Financial Analyst**: `finance@demo.com` / `Password123`
+
+## Key Features:
 
 - Fleet & Vehicle Management
 - Driver Management
