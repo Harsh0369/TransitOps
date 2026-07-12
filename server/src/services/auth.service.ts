@@ -11,7 +11,7 @@ export class AuthService {
     this.jwtSecret = process.env.JWT_SECRET || 'fallback_secret';
   }
 
-  async registerUser(name: string, email: string, passwordRaw: string, phoneNumber?: string) {
+  async registerUser(email: string, passwordRaw: string, role?: Role) {
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -22,6 +22,11 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(passwordRaw, 10);
 
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        role: role || 'FLEET_MANAGER', // Default role
     const userCount = await prisma.user.count();
     const assignedRole = userCount === 0 ? 'FLEET_MANAGER' : 'DRIVER';
 
