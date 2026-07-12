@@ -10,7 +10,7 @@ export class AuthService {
     this.jwtSecret = process.env.JWT_SECRET || 'fallback_secret';
   }
 
-  async registerUser(name: string, email: string, passwordRaw: string) {
+  async registerUser(name: string, email: string, passwordRaw: string, phoneNumber?: string) {
     const existingUser = await prisma.user.findUnique({
       where: { email },
     });
@@ -28,6 +28,7 @@ export class AuthService {
       data: {
         name,
         email,
+        phoneNumber,
         password: hashedPassword,
         role: assignedRole,
       },
