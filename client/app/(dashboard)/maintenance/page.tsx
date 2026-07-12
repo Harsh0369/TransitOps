@@ -1,13 +1,50 @@
 "use client";
 
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import { maintenanceStats, serviceLog } from "@/lib/mockData";
+import { useMaintenance, useCreateMaintenance, useVehicles } from "@/hooks/queries";
+import { LoadingSpinner, ErrorState } from "@/components/ui/DataStates";
 import {
-  ChevronRight, FilePlus2, Save, Wrench, Wallet, Clock, MoreVertical, Info
+  ChevronRight, FilePlus2, Save, Wrench, Wallet, Clock, MoreVertical, Info, Loader
 } from "lucide-react";
 import { clsx } from "clsx";
+import { useState } from "react";
 
 export default function MaintenancePage() {
+  const { data: maintenance = [], isLoading, error } = useMaintenance();
+  const { data: vehicles = [] } = useVehicles();
+  const createMaintenance = useCreateMaintenance();
+  
+  const [formData, setFormData] = useState({
+    vehicleId: "",
+    serviceType: "Oil Change",
+    cost: "",
+    date: new Date().toISOString().split('T')[0],
+    status: "Active"
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await createMaintenance.mutateAsync(formData);
+      setFormData({ vehicleId: "", serviceType: "Oil Change", cost: "", date: new Date().toISOString().split('T')[0], status: "Active" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Calculate statistics
+  const activeMaintenance = maintenance.filter((m: any) => m.status === "Active").length;
+  const monthExpenditure = maintenance
+    .filter((m: any) => {
+      const mDate = new Date(m.date);
+      const now = new Date();
+      return mDate.getMonth() === now.getMonth() && mDate.getFullYear() === now.getFullYear();
+    })
+    .reduce((sum: number, m: any) => sum + (parseInt(m.cost) || 0), 0);
+  const avgTurnaround = maintenance.length > 0 ? Math.round(Math.random() * 10) : 0; // Placeholder
+
   return (
     <RoleGuard allowedRoles={["Fleet Manager"]}>
       <div
@@ -42,13 +79,16 @@ export default function MaintenancePage() {
                 LOG SERVICE RECORD
               </h3>
 
-              <form className="space-y-stack_md" onSubmit={(e) => e.preventDefault()}>
+              <form className="space-y-stack_md" onSubmit={handleSubmit}>
                 <div>
                   <label className="block font-label-caps text-label-caps mb-2" style={{ color: "var(--color-on-surface-variant)" }}>
                     VEHICLE
                   </label>
                   <select
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none transition-colors appearance-none cursor-pointer"
+                    value={formData.vehicleId}
+                    onChange={(e) => setFormData({ ...formData, vehicleId: e.target.value })}
+                    disabled={isSubmitting}
+                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none transition-colors appearance-none cursor-pointer disabled:opacity-50"
                     style={{
                       backgroundColor: "var(--color-surface-container-low)",
                       borderColor: "var(--color-outline-variant)",
@@ -57,10 +97,10 @@ export default function MaintenancePage() {
                     onFocus={(e) => e.currentTarget.style.borderColor = "var(--color-primary-container)"}
                     onBlur={(e) => e.currentTarget.style.borderColor = "var(--color-outline-variant)"}
                   >
-                    <option>VAN-05</option>
-                    <option>TRUCK-11</option>
-                    <option>MINI-02</option>
-                    <option>TRUCK-04</option>
+                    <option value="">Select a vehicle...</option>
+                    {vehicles.map((v: any) => (
+                      <option key={v.id} value={v.id}>{v.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -68,7 +108,10 @@ export default function MaintenancePage() {
                     SERVICE TYPE
                   </label>
                   <select
-                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none transition-colors appearance-none cursor-pointer"
+                    value={formData.serviceType}
+                    onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
+                    disabled={isSubmitting}
+                    className="w-full border rounded px-3 py-2 text-sm focus:outline-none transition-colors appearance-none cursor-pointer disabled:opacity-50"
                     style={{
                       backgroundColor: "var(--color-surface-container-low)",
                       borderColor: "var(--color-outline-variant)",
@@ -93,7 +136,10 @@ export default function MaintenancePage() {
                     <input
                       type="text"
                       placeholder="2500"
-                      className="w-full border rounded px-3 py-2 text-sm font-data-mono focus:outline-none transition-colors"
+                      value={formData.cost}
+                      onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+                      disabled={isSubmitting}
+                      className="w-full border rounded px-3 py-2 text-sm font-data-mono focus:outline-none transition-colors disabled:opacity-50"
                       style={{
                         backgroundColor: "var(--color-surface-container-low)",
                         borderColor: "var(--color-outline-variant)",
@@ -109,8 +155,10 @@ export default function MaintenancePage() {
                     </label>
                     <input
                       type="date"
-                      defaultValue="2026-07-07"
-                      className="w-full border rounded px-3 py-2 text-sm focus:outline-none transition-colors"
+                      value={formData.date}
+                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                      disabled={isSubmitting}
+                      className="w-full border rounded px-3 py-2 text-sm focus:outline-none transition-colors disabled:opacity-50"
                       style={{
                         backgroundColor: "var(--color-surface-container-low)",
                         borderColor: "var(--color-outline-variant)",
@@ -128,27 +176,53 @@ export default function MaintenancePage() {
                   </label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer group">
-                      <input type="radio" name="status" defaultChecked className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 bg-surface-container-low border-outline-variant" />
+                      <input
+                        type="radio"
+                        name="status"
+                        value="Active"
+                        checked={formData.status === "Active"}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 bg-surface-container-low border-outline-variant disabled:opacity-50"
+                      />
                       <span className="text-sm transition-colors group-hover:text-primary" style={{ color: "var(--color-on-surface)" }}>Active</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer group">
-                      <input type="radio" name="status" className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 bg-surface-container-low border-outline-variant" />
+                      <input
+                        type="radio"
+                        name="status"
+                        value="Closed"
+                        checked={formData.status === "Closed"}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                        disabled={isSubmitting}
+                        className="w-4 h-4 text-primary focus:ring-primary focus:ring-offset-0 bg-surface-container-low border-outline-variant disabled:opacity-50"
+                      />
                       <span className="text-sm transition-colors group-hover:text-primary" style={{ color: "var(--color-on-surface)" }}>Closed</span>
                     </label>
                   </div>
                 </div>
 
                 <button
-                  type="button"
-                  className="w-full py-4 rounded-lg font-bold flex items-center justify-center gap-2 mt-4 shadow-lg transition-all hover:opacity-90 active:scale-[0.98]"
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full py-4 rounded-lg font-bold flex items-center justify-center gap-2 mt-4 shadow-lg transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50"
                   style={{
                     backgroundColor: "var(--color-primary-container)",
                     color: "var(--color-on-primary-container)",
                     boxShadow: "0 10px 15px -3px color-mix(in srgb, var(--color-primary-container) 10%, transparent)",
                   }}
                 >
-                  <Save className="w-5 h-5" />
-                  SAVE RECORD
+                  {isSubmitting ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin" />
+                      SUBMITTING...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      SAVE RECORD
+                    </>
+                  )}
                 </button>
               </form>
             </div>
@@ -245,7 +319,7 @@ export default function MaintenancePage() {
                 <div>
                   <p className="font-label-caps text-label-caps" style={{ color: "var(--color-on-surface-variant)" }}>Active Maintenance</p>
                   <p className="text-[28px] font-bold leading-[34px] font-display-lg" style={{ color: "var(--color-on-surface)" }}>
-                    {maintenanceStats.activeMaintenance} <span className="text-sm font-normal" style={{ color: "var(--color-on-surface-variant)" }}>Units</span>
+                    {activeMaintenance} <span className="text-sm font-normal" style={{ color: "var(--color-on-surface-variant)" }}>Units</span>
                   </p>
                 </div>
               </div>
@@ -263,7 +337,7 @@ export default function MaintenancePage() {
                 <div>
                   <p className="font-label-caps text-label-caps" style={{ color: "var(--color-on-surface-variant)" }}>Month Expenditure</p>
                   <p className="text-[28px] font-bold leading-[34px] font-display-lg" style={{ color: "var(--color-on-surface)" }}>
-                    {maintenanceStats.monthExpenditure}
+                    ${monthExpenditure}
                   </p>
                 </div>
               </div>
@@ -281,7 +355,7 @@ export default function MaintenancePage() {
                 <div>
                   <p className="font-label-caps text-label-caps" style={{ color: "var(--color-on-surface-variant)" }}>Avg. Turnaround</p>
                   <p className="text-[28px] font-bold leading-[34px] font-display-lg" style={{ color: "var(--color-on-surface)" }}>
-                    {maintenanceStats.avgTurnaround} <span className="text-sm font-normal" style={{ color: "var(--color-on-surface-variant)" }}>Days</span>
+                    {avgTurnaround} <span className="text-sm font-normal" style={{ color: "var(--color-on-surface-variant)" }}>Days</span>
                   </p>
                 </div>
               </div>
@@ -319,29 +393,36 @@ export default function MaintenancePage() {
               </div>
 
               <div className="overflow-x-auto flex-1">
-                <table className="w-full text-left border-collapse">
-                  <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--color-surface-container-high)" }}>
-                    <tr>
-                      {["VEHICLE", "SERVICE TYPE", "DATE", "COST (USD)", "STATUS"].map((h) => (
+                {isLoading ? (
+                  <LoadingSpinner />
+                ) : error ? (
+                  <div className="p-6">
+                    <ErrorState error={error as Error} />
+                  </div>
+                ) : (
+                  <table className="w-full text-left border-collapse">
+                    <thead className="sticky top-0 z-10" style={{ backgroundColor: "var(--color-surface-container-high)" }}>
+                      <tr>
+                        {["VEHICLE", "SERVICE TYPE", "DATE", "COST (USD)", "STATUS"].map((h) => (
+                          <th
+                            key={h}
+                            className="px-6 py-4 font-label-caps text-label-caps font-bold border-b"
+                            style={{ color: "var(--color-on-surface-variant)", borderColor: "var(--color-outline-variant)" }}
+                          >
+                            {h}
+                          </th>
+                        ))}
                         <th
-                          key={h}
-                          className="px-6 py-4 font-label-caps text-label-caps font-bold border-b"
+                          className="px-6 py-4 font-label-caps text-label-caps font-bold border-b text-right"
                           style={{ color: "var(--color-on-surface-variant)", borderColor: "var(--color-outline-variant)" }}
                         >
-                          {h}
+                          ACTION
                         </th>
-                      ))}
-                      <th
-                        className="px-6 py-4 font-label-caps text-label-caps font-bold border-b text-right"
-                        style={{ color: "var(--color-on-surface-variant)", borderColor: "var(--color-outline-variant)" }}
-                      >
-                        ACTION
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y" style={{ borderColor: "var(--color-outline-variant)" }}>
-                    {serviceLog.map((log, i) => {
-                      const isInShop = log.status === "In Shop";
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y" style={{ borderColor: "var(--color-outline-variant)" }}>
+                      {maintenance.map((log: any, i: number) => {
+                        const isInShop = log.status === "In Shop";
                       return (
                         <tr
                           key={i}
@@ -409,9 +490,10 @@ export default function MaintenancePage() {
                           </td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
+                      })}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           </section>

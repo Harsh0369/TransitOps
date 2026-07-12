@@ -1,8 +1,9 @@
 "use client";
 
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import { fuelLogs, otherExpenses } from "@/lib/mockData";
-import { useState, useEffect } from "react";
+import { useFuelLogs, useExpenses } from "@/hooks/queries";
+import { LoadingSpinner, ErrorState } from "@/components/ui/DataStates";
+import { useState } from "react";
 import {
   Fuel, Receipt, TrendingDown, TrendingUp, Plus, ChevronRight,
   Truck, Car, Bus, Calculator
@@ -10,22 +11,15 @@ import {
 import { clsx } from "clsx";
 
 export default function FuelExpensesPage() {
-  const [totalCost, setTotalCost] = useState(34070);
-  const [isFading, setIsFading] = useState(false);
+  const { data: fuelLogs = [], isLoading: fuelLoading, error: fuelError } = useFuelLogs();
+  const { data: expenses = [], isLoading: expensesLoading, error: expensesError } = useExpenses();
+  const [filterTab, setFilterTab] = useState("Fuel");
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const noise = Math.floor(Math.random() * 5) - 2; // small fluctuation
-      if (Math.abs(noise) > 1) {
-        setTotalCost((prev) => prev + noise);
-        setIsFading(true);
-        const timer = setTimeout(() => setIsFading(false), 300);
-        return () => clearTimeout(timer);
-      }
-    }, 5000);
+  const allItems = filterTab === "Fuel" ? fuelLogs : expenses;
+  const isLoading = filterTab === "Fuel" ? fuelLoading : expensesLoading;
+  const error = filterTab === "Fuel" ? fuelError : expensesError;
 
-    return () => clearInterval(interval);
-  }, []);
+  const totalCost = allItems.reduce((sum: number, item: any) => sum + (parseInt(item.cost) || 0), 0);
 
   return (
     <RoleGuard allowedRoles={["Fleet Manager", "Financial Analyst"]}>
