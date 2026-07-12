@@ -9,7 +9,7 @@ This project was built as part of a software engineering hackathon with a heavy 
 ---
 
 ### 🌐 Live Deployment Links
-* **Frontend Application**: [https://transit-ops-zkqs.vercel.app/](https://transit-ops-weld.vercel.app/)
+* **Frontend Application**: [https://transit-ops-weld.vercel.app//](https://transit-ops-weld.vercel.app/)
 * **Backend Server / API**: [https://transitops-32u2.onrender.com](https://transitops-32u2.onrender.com)
 
 ---
