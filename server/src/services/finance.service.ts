@@ -1,13 +1,27 @@
 import { prisma } from '../lib/prisma';
 import { AuditService } from './audit.service';
+import { QueryOptions } from '../utils/query.util';
 
 export class ExpenseService {
-  async getAll() {
-    return prisma.expense.findMany({ 
-      where: { deletedAt: null },
-      include: { vehicle: true }, 
-      orderBy: { date: 'desc' } 
-    });
+  async getAll(options?: QueryOptions) {
+    const where = { deletedAt: null };
+    
+    if (options && options.exportData) {
+      return prisma.expense.findMany({ where, include: { vehicle: true }, orderBy: { [options.sortBy]: options.sortOrder } });
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.expense.findMany({
+        where,
+        include: { vehicle: true },
+        skip: options ? options.skip : 0,
+        take: options ? options.limit : 100,
+        orderBy: options ? { [options.sortBy]: options.sortOrder } : { date: 'desc' }
+      }),
+      prisma.expense.count({ where })
+    ]);
+    
+    return { data, total };
   }
 
   async createExpense(data: any, userId: string) {
@@ -23,12 +37,25 @@ export class ExpenseService {
 }
 
 export class FuelService {
-  async getAll() {
-    return prisma.fuelLog.findMany({ 
-      where: { deletedAt: null },
-      include: { vehicle: true, trip: true }, 
-      orderBy: { date: 'desc' } 
-    });
+  async getAll(options?: QueryOptions) {
+    const where = { deletedAt: null };
+    
+    if (options && options.exportData) {
+      return prisma.fuelLog.findMany({ where, include: { vehicle: true, trip: true }, orderBy: { [options.sortBy]: options.sortOrder } });
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.fuelLog.findMany({
+        where,
+        include: { vehicle: true, trip: true },
+        skip: options ? options.skip : 0,
+        take: options ? options.limit : 100,
+        orderBy: options ? { [options.sortBy]: options.sortOrder } : { date: 'desc' }
+      }),
+      prisma.fuelLog.count({ where })
+    ]);
+    
+    return { data, total };
   }
 
   async createFuelLog(data: any, userId: string) {

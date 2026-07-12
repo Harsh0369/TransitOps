@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { ExpenseService, FuelService, FinancialReportService } from '../services/finance.service';
 import { successResponse, errorResponse } from '../utils/response.util';
+import { QueryUtil } from '../utils/query.util';
+import { CsvUtil } from '../utils/csv.util';
 
 const expenseService = new ExpenseService();
 const fuelService = new FuelService();
@@ -9,8 +11,17 @@ const reportService = new FinancialReportService();
 export class FinanceController {
   static async getAllExpenses(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await expenseService.getAll();
-      res.status(200).json(successResponse('Expenses retrieved', data));
+      const options = QueryUtil.parse(req, 'date');
+      const result = await expenseService.getAll(options);
+
+      if (options.exportData) {
+        res.header('Content-Type', 'text/csv');
+        res.attachment('expenses.csv');
+        return res.send(CsvUtil.jsonToCsv(result as any[]));
+      }
+
+      const { data, total } = result as { data: any[], total: number };
+      res.status(200).json(successResponse('Expenses retrieved', data, QueryUtil.getPaginationMeta(total, options)));
     } catch (error) {
       next(error);
     }
@@ -27,8 +38,17 @@ export class FinanceController {
 
   static async getAllFuelLogs(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await fuelService.getAll();
-      res.status(200).json(successResponse('Fuel logs retrieved', data));
+      const options = QueryUtil.parse(req, 'date');
+      const result = await fuelService.getAll(options);
+
+      if (options.exportData) {
+        res.header('Content-Type', 'text/csv');
+        res.attachment('fuel_logs.csv');
+        return res.send(CsvUtil.jsonToCsv(result as any[]));
+      }
+
+      const { data, total } = result as { data: any[], total: number };
+      res.status(200).json(successResponse('Fuel logs retrieved', data, QueryUtil.getPaginationMeta(total, options)));
     } catch (error) {
       next(error);
     }

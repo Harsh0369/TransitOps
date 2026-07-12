@@ -1,8 +1,9 @@
-export const successResponse = <T>(message: string, data?: T) => {
+export const successResponse = <T>(message: string, data?: T, meta?: any) => {
   return {
     success: true,
     message,
     data,
+    meta,
   };
 };
 
