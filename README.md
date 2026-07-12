@@ -8,6 +8,12 @@ This project was built as part of a software engineering hackathon with a heavy 
 
 ---
 
+### 🌐 Live Deployment Links
+* **Frontend Application**: [https://transit-ops-zkqs.vercel.app/](https://transit-ops-zkqs.vercel.app/)
+* **Backend Server / API**: [https://transitops-32u2.onrender.com](https://transitops-32u2.onrender.com)
+
+---
+
 ## 🚀 Quick Evaluation Guide (Credentials & Data)
 
 Both our Local and Neon (Cloud) PostgreSQL databases have been seeded with extensive, varied data (100+ vehicles, 75 drivers, 400+ trips, rich audit logs, maintenance records, and fuel histories). 
