@@ -5,7 +5,7 @@ import { useAppContext } from '../providers/AppProvider';
 import { BarChart3, TrendingUp, ShieldCheck, Fuel, Wrench, Coins } from 'lucide-react';
 
 export const AnalyticsView = () => {
-  const { trips, expenses, vehicles } = useAppContext();
+  const { trips, expenses, vehicles, drivers, fuelLogs } = useAppContext();
 
   // Calculations
   const completedTrips = trips.filter(t => t.status === 'COMPLETED');
@@ -16,6 +16,26 @@ export const AnalyticsView = () => {
   const maintenanceExpenses = expenses.filter(e => e.expenseType === 'Maintenance').reduce((sum, e) => sum + e.amount, 0);
   const otherExpenses = expenses.filter(e => e.expenseType !== 'Fuel' && e.expenseType !== 'Maintenance').reduce((sum, e) => sum + e.amount, 0);
   const totalSpend = fuelExpenses + maintenanceExpenses + otherExpenses;
+
+  // Fuel efficiency (km per liter)
+  const totalFuelUsed = fuelLogs.reduce((sum, f) => sum + f.liters, 0);
+  const fuelEfficiency = totalFuelUsed > 0 ? (totalDistance / totalFuelUsed).toFixed(2) : '0';
+
+  // ROI (simplified: assume some revenue, e.g., cargo * 10)
+  const revenue = totalCargo * 10;
+  const roi = totalSpend > 0 ? (((revenue - totalSpend) / totalSpend) * 100).toFixed(2) : '0';
+
+  // Average safety score
+  const averageSafetyScore = drivers.length > 0 
+    ? (drivers.reduce((sum, d) => sum + d.safetyScore, 0) / drivers.length).toFixed(1) 
+    : '0';
+
+  // Fleet utilization
+  const activeVehicles = vehicles.filter(v => v.status === 'ON_TRIP').length;
+  const totalActiveVehicles = vehicles.filter(v => v.status !== 'RETIRED').length;
+  const fleetUtilization = totalActiveVehicles > 0 
+    ? Math.round((activeVehicles / totalActiveVehicles) * 100) 
+    : 0;
 
   // CSS Charts mock items representing dates
   const dailyPayloadData = [
@@ -31,9 +51,9 @@ export const AnalyticsView = () => {
   const maxPayload = Math.max(...dailyPayloadData.map(d => d.payload));
 
   const costBreakdown = [
-    { name: 'Fuel Purchases', value: fuelExpenses + 14500, percentage: 0, color: 'bg-indigo-600' }, // added baseline to feel complete
-    { name: 'Maintenance & Spares', value: maintenanceExpenses + 4800, percentage: 0, color: 'bg-amber-500' },
-    { name: 'Tolls & Route Fees', value: otherExpenses + 1200, percentage: 0, color: 'bg-emerald-500' },
+    { name: 'Fuel Purchases', value: fuelExpenses, percentage: 0, color: 'bg-indigo-600' },
+    { name: 'Maintenance & Spares', value: maintenanceExpenses, percentage: 0, color: 'bg-amber-500' },
+    { name: 'Tolls & Route Fees', value: otherExpenses, percentage: 0, color: 'bg-emerald-500' },
   ];
 
   const totalCostCombined = costBreakdown.reduce((sum, item) => sum + item.value, 0);
@@ -44,7 +64,7 @@ export const AnalyticsView = () => {
   return (
     <div className="space-y-6">
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         
         <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-sm flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 shrink-0">
@@ -62,27 +82,47 @@ export const AnalyticsView = () => {
           </div>
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Cargo Transported</p>
-            <h4 className="text-xl font-bold text-zinc-900 mt-0.5">{(totalCargo + 16800).toLocaleString()} kg</h4>
+            <h4 className="text-xl font-bold text-zinc-900 mt-0.5">{totalCargo.toLocaleString()} kg</h4>
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-sm flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
-            <BarChart3 className="w-5 h-5" />
+            <Fuel className="w-5 h-5" />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Distance Covered</p>
-            <h4 className="text-xl font-bold text-zinc-900 mt-0.5">{(totalDistance + 650).toLocaleString()} km</h4>
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Fuel Efficiency</p>
+            <h4 className="text-xl font-bold text-zinc-900 mt-0.5">{fuelEfficiency} km/l</h4>
           </div>
         </div>
 
         <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-sm flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 shrink-0">
+            <BarChart3 className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">ROI</p>
+            <h4 className="text-xl font-bold text-zinc-900 mt-0.5">{roi}%</h4>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-sm flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 shrink-0">
             <ShieldCheck className="w-5 h-5" />
           </div>
           <div>
             <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Safety Rating Average</p>
-            <h4 className="text-xl font-bold text-zinc-900 mt-0.5">93.8%</h4>
+            <h4 className="text-xl font-bold text-zinc-900 mt-0.5">{averageSafetyScore}%</h4>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-zinc-100 shadow-sm flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-pink-50 flex items-center justify-center text-pink-600 shrink-0">
+            <Wrench className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">Fleet Utilization</p>
+            <h4 className="text-xl font-bold text-zinc-900 mt-0.5">{fleetUtilization}%</h4>
           </div>
         </div>
 

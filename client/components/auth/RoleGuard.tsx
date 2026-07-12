@@ -16,9 +16,9 @@ export function RoleGuard({ children, allowedRoles }: { children: React.ReactNod
     if (user === null) {
       router.replace("/login");
     } else if (!allowedRoles.includes(user.role)) {
-      router.replace("/dashboard"); 
+      // Redirect to dashboard if not authorized
+      router.replace("/dashboard");
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAuthorized(true);
     }
   }, [user, isLoading, allowedRoles, router]);
