@@ -2,17 +2,23 @@ import { Router } from 'express';
 import { FinanceController } from '../controllers/finance.controller';
 import { validate } from '../middlewares/validate.middleware';
 import { authenticate, authorize } from '../middlewares/auth.middleware';
-import { createExpenseSchema } from '../validators/expense.validator';
+import { createExpenseSchema, createFuelLogSchema } from '../validators/finance.validator';
 
 const router = Router();
 
 router.use(authenticate);
 
-// Expense Routes
-router.get('/expenses', authorize(['FINANCIAL_ANALYST', 'FLEET_MANAGER', 'ADMIN']), FinanceController.getAllExpenses);
-router.post('/expenses', authorize(['FINANCIAL_ANALYST', 'ADMIN']), validate(createExpenseSchema), FinanceController.createExpense);
+// Reports (Strict access)
+router.get('/reports/operational-cost', authorize(['FLEET_MANAGER', 'ADMIN', 'FINANCIAL_ANALYST']), FinanceController.getOperationalCostChart);
+router.get('/reports/fuel-efficiency', authorize(['FLEET_MANAGER', 'ADMIN', 'FINANCIAL_ANALYST']), FinanceController.getFuelEfficiency);
+router.get('/reports/vehicle-roi/:vehicleId', authorize(['FLEET_MANAGER', 'ADMIN', 'FINANCIAL_ANALYST']), FinanceController.getVehicleROI);
 
-// Fuel Routes
-router.get('/fuel', authorize(['FINANCIAL_ANALYST', 'FLEET_MANAGER', 'ADMIN']), FinanceController.getAllFuelLogs);
+// Fuel Logs
+router.get('/fuel', authorize(['FLEET_MANAGER', 'ADMIN', 'FINANCIAL_ANALYST']), FinanceController.getAllFuelLogs);
+router.post('/fuel', authorize(['FLEET_MANAGER', 'ADMIN', 'DRIVER']), validate(createFuelLogSchema), FinanceController.createFuelLog);
+
+// Expenses
+router.get('/expenses', authorize(['FLEET_MANAGER', 'ADMIN', 'FINANCIAL_ANALYST']), FinanceController.getAllExpenses);
+router.post('/expenses', authorize(['FLEET_MANAGER', 'ADMIN', 'FINANCIAL_ANALYST']), validate(createExpenseSchema), FinanceController.createExpense);
 
 export default router;

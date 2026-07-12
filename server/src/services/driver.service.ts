@@ -1,14 +1,28 @@
 import { prisma } from '../lib/prisma';
 import { DriverStatus } from '@prisma/client';
 import { AuditService } from './audit.service';
+import { QueryOptions } from '../utils/query.util';
 
 export class DriverService {
-  async getAllDrivers() {
-    return prisma.driver.findMany({
-      where: { deletedAt: null },
-      include: { user: { select: { name: true, email: true, phoneNumber: true } } },
-      orderBy: { createdAt: 'desc' }
-    });
+  async getAll(options?: QueryOptions) {
+    const where = { deletedAt: null };
+    
+    if (options && options.exportData) {
+      return prisma.driver.findMany({ where, include: { user: { select: { name: true, email: true, phoneNumber: true } } }, orderBy: { [options.sortBy]: options.sortOrder } });
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.driver.findMany({
+        where,
+        include: { user: { select: { name: true, email: true, phoneNumber: true } } },
+        skip: options ? options.skip : 0,
+        take: options ? options.limit : 100,
+        orderBy: options ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' }
+      }),
+      prisma.driver.count({ where })
+    ]);
+    
+    return { data, total };
   }
 
   async getDriverById(id: string) {

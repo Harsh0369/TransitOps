@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { VehicleService } from '../services/vehicle.service';
 import { successResponse, errorResponse } from '../utils/response.util';
+import { QueryUtil } from '../utils/query.util';
+import { CsvUtil } from '../utils/csv.util';
 
 const vehicleService = new VehicleService();
 
@@ -8,8 +10,32 @@ export class VehicleController {
   
   static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const vehicles = await vehicleService.getAllVehicles();
-      res.status(200).json(successResponse('Vehicles retrieved successfully', vehicles));
+      const options = QueryUtil.parse(req, 'createdAt');
+      const filters = {
+        ...options,
+        roadworthy: req.query.roadworthy === 'true' ? true : req.query.roadworthy === 'false' ? false : undefined,
+        complianceStatus: req.query.complianceStatus ? JSON.parse(req.query.complianceStatus as string) : undefined
+      };
+      
+      const result = await vehicleService.getAllVehicles(filters);
+      
+      if (options.exportData) {
+        res.header('Content-Type', 'text/csv');
+        res.attachment('vehicles.csv');
+        return res.send(CsvUtil.jsonToCsv(result as any[]));
+      }
+      
+      const { data, total } = result as { data: any[], total: number };
+      res.status(200).json(successResponse('Vehicles retrieved successfully', data, QueryUtil.getPaginationMeta(total, options)));
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getDashboard(req: Request, res: Response, next: NextFunction) {
+    try {
+      const dashboard = await vehicleService.getComplianceDashboard();
+      res.status(200).json(successResponse('Compliance dashboard retrieved', dashboard));
     } catch (error) {
       next(error);
     }

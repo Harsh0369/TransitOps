@@ -1,14 +1,25 @@
 import { Request, Response, NextFunction } from 'express';
 import { MaintenanceService } from '../services/maintenance.service';
 import { successResponse, errorResponse } from '../utils/response.util';
+import { QueryUtil } from '../utils/query.util';
+import { CsvUtil } from '../utils/csv.util';
 
 const maintenanceService = new MaintenanceService();
 
 export class MaintenanceController {
   static async getAll(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await maintenanceService.getAll();
-      res.status(200).json(successResponse('Maintenance records retrieved', data));
+      const options = QueryUtil.parse(req, 'createdAt');
+      const result = await maintenanceService.getAll(options);
+
+      if (options.exportData) {
+        res.header('Content-Type', 'text/csv');
+        res.attachment('maintenance.csv');
+        return res.send(CsvUtil.jsonToCsv(result as any[]));
+      }
+
+      const { data, total } = result as { data: any[], total: number };
+      res.status(200).json(successResponse('Maintenance records retrieved', data, QueryUtil.getPaginationMeta(total, options)));
     } catch (error) {
       next(error);
     }

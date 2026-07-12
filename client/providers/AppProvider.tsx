@@ -8,7 +8,8 @@ import {
   INITIAL_TRIPS,
   INITIAL_MAINTENANCE,
   INITIAL_EXPENSES,
-  INITIAL_FUEL_LOGS
+  INITIAL_FUEL_LOGS,
+  INITIAL_AUDIT_LOGS
 } from '../constants/mockData';
 
 interface Filters {
@@ -24,6 +25,7 @@ interface AppContextType {
   maintenance: Maintenance[];
   expenses: Expense[];
   fuelLogs: FuelLog[];
+  auditLogs: AuditLog[];
   activeTab: string;
   setActiveTab: (tab: string) => void;
   filters: Filters;
@@ -69,6 +71,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   const [maintenance, setMaintenance] = useState<Maintenance[]>(INITIAL_MAINTENANCE);
   const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES);
   const [fuelLogs, setFuelLogs] = useState<FuelLog[]>(INITIAL_FUEL_LOGS);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
   
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -77,6 +80,38 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     status: 'all',
     region: 'all'
   });
+
+  const addAuditLog = (
+    action: string,
+    entity: string,
+    entityId: string,
+    oldValue?: any,
+    newValue?: any,
+    metadata?: any,
+    reason?: string
+  ) => {
+    const newLog: AuditLog = {
+      id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
+      action,
+      entity,
+      entityId,
+      oldValue,
+      newValue,
+      metadata,
+      reason,
+      ipAddress: '192.168.1.100',
+      userId: 'u-101',
+      user: {
+        id: 'u-101',
+        name: 'Manager A',
+        email: 'manager.a@transitops.in',
+        role: 'FLEET_MANAGER',
+      },
+      timestamp: new Date().toISOString(),
+    };
+    setAuditLogs((prev) => [newLog, ...prev]);
+  };
+
 
   // Automatically update statuses based on active trips
   useEffect(() => {
@@ -347,9 +382,15 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     if (trip.driverId) {
       setDrivers(prev => prev.map(d => d.id === trip.driverId ? { ...d, status: 'AVAILABLE' } : d));
     }
-    
-    if (!updatedTrip) throw new Error('Trip not found');
-    return updatedTrip;
+
+    addAuditLog(
+      'TRIP_APPROVED',
+      'Trip',
+      tripId,
+      { status: trip.status },
+      { status: 'COMPLETED', finalOdometer, fuelUsed },
+      { fuelCost: fuelUsed * 1.5 }
+    );
   };
 
   // Maintenance Functions
@@ -374,7 +415,20 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     };
     setMaintenance(prev => [newMaint, ...prev]);
     setVehicles(prev => prev.map(v => v.id === vehicleId ? { ...v, status: 'IN_SHOP' } : v));
-    return newMaint;
+
+    addAuditLog(
+      'MAINTENANCE_STARTED',
+      'Maintenance',
+      nextMaintId,
+      null,
+      {
+        vehicleId,
+        maintenanceType: type,
+        description,
+        status: 'OPEN'
+      },
+      { vehicleId }
+    );
   };
 
   const resolveMaintenance = async (maintenanceId: string, cost: number): Promise<Maintenance> => {
@@ -462,6 +516,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
     setMaintenance(INITIAL_MAINTENANCE);
     setExpenses(INITIAL_EXPENSES);
     setFuelLogs(INITIAL_FUEL_LOGS);
+    setAuditLogs(INITIAL_AUDIT_LOGS);
     setFilters({ vehicleType: 'all', status: 'all', region: 'all' });
     setSearchQuery('');
   };
@@ -642,6 +697,7 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
         maintenance,
         expenses,
         fuelLogs,
+        auditLogs,
         activeTab,
         setActiveTab,
         filters,

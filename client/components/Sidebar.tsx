@@ -12,7 +12,9 @@ import {
   BarChart3,
   Settings,
   RefreshCw,
-  Zap
+  Zap,
+  ScrollText,
+  FileSpreadsheet
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -26,7 +28,9 @@ export const Sidebar = () => {
     { id: 'trips', name: 'Trips', icon: Route },
     { id: 'maintenance', name: 'Maintenance', icon: Wrench },
     { id: 'expenses', name: 'Fuel & Expenses', icon: Fuel },
-    { id: 'analytics', name: 'Reports & Analytics', icon: BarChart3 },
+    { id: 'analytics', name: 'Analytics', icon: BarChart3 },
+    { id: 'reports', name: 'Operational Reports', icon: FileSpreadsheet },
+    { id: 'audit-logs', name: 'Audit Logs', icon: ScrollText },
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
 

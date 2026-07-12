@@ -1,9 +1,27 @@
 import { prisma } from '../lib/prisma';
 import { AuditService } from './audit.service';
+import { QueryOptions } from '../utils/query.util';
 
 export class MaintenanceService {
-  async getAll() {
-    return prisma.maintenance.findMany({ include: { vehicle: true } });
+  async getAll(options?: QueryOptions) {
+    const where = { deletedAt: null };
+    
+    if (options && options.exportData) {
+      return prisma.maintenance.findMany({ where, include: { vehicle: true }, orderBy: { [options.sortBy]: options.sortOrder } });
+    }
+
+    const [data, total] = await Promise.all([
+      prisma.maintenance.findMany({
+        where,
+        include: { vehicle: true },
+        skip: options ? options.skip : 0,
+        take: options ? options.limit : 100,
+        orderBy: options ? { [options.sortBy]: options.sortOrder } : { createdAt: 'desc' }
+      }),
+      prisma.maintenance.count({ where })
+    ]);
+    
+    return { data, total };
   }
 
   async startMaintenance(data: any, userId: string) {
