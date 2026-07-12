@@ -3,6 +3,8 @@ import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
+import authRoute from './routes/auth.route';
+import vehicleRoute from './routes/vehicle.route';
 import sampleRoute from './routes/sample.route';
 import { globalErrorMiddleware, notFoundMiddleware } from './middlewares/error.middleware';
 
@@ -17,6 +19,8 @@ app.use(morgan('dev'));
 app.use(cookieParser());
 
 // Routes
+app.use('/api/auth', authRoute);
+app.use('/api/vehicles', vehicleRoute);
 app.use('/api/sample', sampleRoute);
 
 // Error Handling
