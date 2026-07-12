@@ -104,6 +104,7 @@ model Driver {
   licenseExpiry   DateTime
   contactNumber   String
   safetyScore     Float        @default(100.0)
+  profilePictureUrl String?
   status          DriverStatus @default(AVAILABLE)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -218,6 +219,7 @@ model VehicleCompliance {
   certificateNumber String
   issueDate         DateTime
   expiryDate        DateTime
+  documentUrl       String?
   remarks           String?
   createdBy         String?
   updatedBy         String?
