@@ -19,8 +19,10 @@ Built as a pat of a software engineering hackathon, TransitOps emphasizes on cle
 
 **FRONTEND**
 - `client/` - Next.js + TypeScript+ Tailwind CSS
+  
 **BACKEND**
 - `server/` - Express + Node +PostgreSQL
+  
 **DevOps**
 - Docker
 
