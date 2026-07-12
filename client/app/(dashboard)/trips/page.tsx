@@ -1,32 +1,83 @@
 "use client";
 
 import { RoleGuard } from "@/components/auth/RoleGuard";
-import { liveTrips, availableVehiclesForTrip, availableDriversForTrip } from "@/lib/mockData";
-import { useState } from "react";
+import { FormError } from "@/components/ui/FormError";
+import { LoadingSpinner, ErrorState } from "@/components/ui/DataStates";
+import { useFormError } from "@/hooks/useFormError";
+import { useTrips, useCreateTrip, useVehicles, useDrivers } from "@/hooks/queries";
+import { useState, useEffect } from "react";
 import {
   Truck, Clock, MoreVertical, Check, AlertTriangle, X,
-  Zap, PlusCircle, Plus, ArrowRight, Hourglass, UserX, Info
+  Zap, Plus, ArrowRight, Hourglass, UserX, Info, Loader
 } from "lucide-react";
 import { clsx } from "clsx";
-
-const VEHICLE_CAPACITY: Record<string, number> = {
-  "van-05": 500,
-  "truck-12": 2500,
-  "bike-02": 50,
-};
 
 const TRIP_STEPS = ["Draft", "Dispatched", "Completed", "Cancelled"];
 
 export default function TripsPage() {
-  const [source, setSource] = useState("Gandhinagar Depot");
-  const [destination, setDestination] = useState("Ahmedabad Hub");
-  const [vehicleId, setVehicleId] = useState("van-05");
-  const [driverId, setDriverId] = useState("alex");
-  const [cargoWeight, setCargoWeight] = useState(700);
-  const [distance, setDistance] = useState(38);
+  const [source, setSource] = useState("");
+  const [destination, setDestination] = useState("");
+  const [vehicleId, setVehicleId] = useState("");
+  const [driverId, setDriverId] = useState("");
+  const [cargoWeight, setCargoWeight] = useState(0);
+  const [distance, setDistance] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  const capacity = VEHICLE_CAPACITY[vehicleId] ?? 500;
+  const { data: trips = [], isLoading: tripsLoading, error: tripsError } = useTrips();
+  const { data: vehicles = [] } = useVehicles();
+  const { data: drivers = [] } = useDrivers();
+  const createTrip = useCreateTrip();
+  const { error, fieldErrors, handleError, clearError } = useFormError();
+
+  const selectedVehicle = vehicles.find((v: any) => v.id === vehicleId);
+  const capacity = selectedVehicle?.capacity ? parseInt(selectedVehicle.capacity) : 500;
   const overCapacity = cargoWeight > capacity;
+
+  const handleDispatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+    setSuccessMessage("");
+
+    if (!vehicleId || !driverId) {
+      handleError(new Error("Please select vehicle and driver"));
+      return;
+    }
+
+    if (overCapacity) {
+      handleError(new Error(`Cargo weight (${cargoWeight}kg) exceeds vehicle capacity (${capacity}kg)`));
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createTrip.mutateAsync({
+        source,
+        destination,
+        vehicleId,
+        driverId,
+        cargoWeight,
+        distance,
+        status: "Dispatched",
+      });
+
+      setSuccessMessage("Trip dispatched successfully!");
+      // Reset form
+      setSource("");
+      setDestination("");
+      setVehicleId("");
+      setDriverId("");
+      setCargoWeight(0);
+      setDistance(0);
+
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccessMessage(""), 3000);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <RoleGuard allowedRoles={["Fleet Manager", "Dispatcher"]}>
@@ -83,13 +134,21 @@ export default function TripsPage() {
                 ))}
               </div>
 
+              {/* Error/Success Messages */}
+              {error && <FormError error={error} fieldErrors={fieldErrors} />}
+              {successMessage && (
+                <div className="p-3 rounded-lg border border-green-500/20 bg-green-950/40">
+                  <p className="text-sm text-green-200">{successMessage}</p>
+                </div>
+              )}
+
               {/* Form fields */}
-              <div className="space-y-stack_md">
+              <form className="space-y-stack_md" onSubmit={handleDispatch}>
                 <div className="grid grid-cols-2 gap-stack_md">
                   {[
-                    { label: "Source", value: source, onChange: setSource },
-                    { label: "Destination", value: destination, onChange: setDestination },
-                  ].map(({ label, value, onChange }) => (
+                    { label: "Source", value: source, onChange: setSource, placeholder: "Origin location" },
+                    { label: "Destination", value: destination, onChange: setDestination, placeholder: "Final destination" },
+                  ].map(({ label, value, onChange, placeholder }) => (
                     <div key={label} className="space-y-1">
                       <label className="font-label-caps text-label-caps" style={{ color: "var(--color-on-surface-variant)" }}>
                         {label}
@@ -98,14 +157,17 @@ export default function TripsPage() {
                         type="text"
                         value={value}
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none"
+                        placeholder={placeholder}
+                        disabled={isSubmitting}
+                        className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none disabled:opacity-50"
                         style={{
                           backgroundColor: "var(--color-surface)",
-                          borderColor: "var(--color-outline-variant)",
+                          borderColor: fieldErrors[label.toLowerCase()] ? "var(--color-error)" : "var(--color-outline-variant)",
                           color: "var(--color-on-surface)",
                         }}
                         onFocus={(e) => { e.currentTarget.style.borderColor = "var(--color-primary)"; }}
                         onBlur={(e) => { e.currentTarget.style.borderColor = "var(--color-outline-variant)"; }}
+                        required
                       />
                     </div>
                   ))}
@@ -118,15 +180,18 @@ export default function TripsPage() {
                   <select
                     value={vehicleId}
                     onChange={(e) => setVehicleId(e.target.value)}
-                    className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none appearance-none cursor-pointer"
+                    disabled={isSubmitting}
+                    className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none appearance-none cursor-pointer disabled:opacity-50"
                     style={{
                       backgroundColor: "var(--color-surface)",
-                      borderColor: "var(--color-outline-variant)",
+                      borderColor: fieldErrors.vehicleId ? "var(--color-error)" : "var(--color-outline-variant)",
                       color: "var(--color-on-surface)",
                     }}
+                    required
                   >
-                    {availableVehiclesForTrip.map((v) => (
-                      <option key={v.id} value={v.id}>{v.label}</option>
+                    <option value="">Select a vehicle...</option>
+                    {vehicles.filter((v: any) => v.status === "Available").map((v: any) => (
+                      <option key={v.id} value={v.id}>{v.name} - {v.capacity}kg</option>
                     ))}
                   </select>
                 </div>
@@ -138,15 +203,18 @@ export default function TripsPage() {
                   <select
                     value={driverId}
                     onChange={(e) => setDriverId(e.target.value)}
-                    className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none appearance-none cursor-pointer"
+                    disabled={isSubmitting}
+                    className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none appearance-none cursor-pointer disabled:opacity-50"
                     style={{
                       backgroundColor: "var(--color-surface)",
-                      borderColor: "var(--color-outline-variant)",
+                      borderColor: fieldErrors.driverId ? "var(--color-error)" : "var(--color-outline-variant)",
                       color: "var(--color-on-surface)",
                     }}
+                    required
                   >
-                    {availableDriversForTrip.map((d) => (
-                      <option key={d.id} value={d.id}>{d.label}</option>
+                    <option value="">Select a driver...</option>
+                    {drivers.filter((d: any) => d.status === "Available" || d.status === "On Trip").map((d: any) => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
                     ))}
                   </select>
                 </div>
@@ -160,12 +228,14 @@ export default function TripsPage() {
                       type="number"
                       value={cargoWeight}
                       onChange={(e) => setCargoWeight(Number(e.target.value))}
-                      className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none font-bold"
+                      disabled={isSubmitting}
+                      className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none font-bold disabled:opacity-50"
                       style={{
                         backgroundColor: "var(--color-surface)",
                         borderColor: overCapacity ? "var(--color-error)" : "var(--color-outline-variant)",
                         color: overCapacity ? "var(--color-error)" : "var(--color-on-surface)",
                       }}
+                      required
                     />
                   </div>
                   <div className="space-y-1">
@@ -176,12 +246,14 @@ export default function TripsPage() {
                       type="number"
                       value={distance}
                       onChange={(e) => setDistance(Number(e.target.value))}
-                      className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none"
+                      disabled={isSubmitting}
+                      className="w-full rounded-lg p-2.5 text-sm border transition-all focus:outline-none disabled:opacity-50"
                       style={{
                         backgroundColor: "var(--color-surface)",
                         borderColor: "var(--color-outline-variant)",
                         color: "var(--color-on-surface)",
                       }}
+                      required
                     />
                   </div>
                 </div>
@@ -214,30 +286,53 @@ export default function TripsPage() {
                 {/* Action buttons */}
                 <div className="pt-stack_md flex gap-3">
                   <button
-                    disabled={overCapacity}
+                    type="submit"
+                    disabled={overCapacity || isSubmitting}
                     className={clsx(
                       "flex-1 py-3 rounded-lg font-label-caps text-label-caps flex items-center justify-center gap-2 transition-all",
-                      overCapacity ? "opacity-50 cursor-not-allowed" : "hover:opacity-90 cursor-pointer"
+                      overCapacity || isSubmitting ? "opacity-50 cursor-not-allowed" : "hover:opacity-90 cursor-pointer"
                     )}
                     style={
-                      overCapacity
+                      overCapacity || isSubmitting
                         ? { backgroundColor: "var(--color-surface-container-highest)", color: "var(--color-on-surface-variant)" }
                         : { backgroundColor: "var(--color-primary)", color: "var(--color-on-primary)" }
                     }
                   >
-                    <Zap className="w-4 h-4" />
-                    {overCapacity ? "Dispatch Disabled" : "Dispatch Trip"}
+                    {isSubmitting ? (
+                      <>
+                        <Loader className="w-4 h-4 animate-spin" />
+                        Dispatching...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4" />
+                        {overCapacity ? "Dispatch Disabled" : "Dispatch Trip"}
+                      </>
+                    )}
                   </button>
                   <button
-                    className="px-stack_lg py-3 rounded-lg font-label-caps text-label-caps transition-all hover:opacity-90"
+                    type="button"
+                    onClick={() => {
+                      setSource("");
+                      setDestination("");
+                      setVehicleId("");
+                      setDriverId("");
+                      setCargoWeight(0);
+                      setDistance(0);
+                      clearError();
+                      setSuccessMessage("");
+                    }}
+                    disabled={isSubmitting}
+                    className="px-stack_lg py-3 rounded-lg font-label-caps text-label-caps transition-all hover:opacity-90 disabled:opacity-50"
                     style={{
                       backgroundColor: "var(--color-surface-variant)",
                       color: "var(--color-on-surface-variant)",
                     }}
                   >
-                    Cancel
+                    Clear
                   </button>
                 </div>
+              </form>
               </div>
             </div>
 
@@ -273,130 +368,78 @@ export default function TripsPage() {
               </div>
             </div>
 
-            <div className="space-y-stack_md">
-              {/* TR001 — Dispatched */}
-              <div
-                className="border rounded-lg p-stack_lg relative overflow-hidden transition-all hover:border-secondary group"
-                style={{
-                  backgroundColor: "var(--color-surface-container-high)",
-                  borderColor: "color-mix(in srgb, var(--color-secondary) 30%, transparent)",
-                }}
-              >
-                <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: "var(--color-secondary)" }} />
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="flex items-center gap-3 mb-1">
-                      <span className="font-data-mono text-sm" style={{ color: "var(--color-secondary)" }}>TR001</span>
-                      <span
-                        className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase"
-                        style={{
-                          backgroundColor: "color-mix(in srgb, var(--color-secondary) 15%, transparent)",
-                          color: "var(--color-secondary)",
-                        }}
-                      >Dispatched</span>
-                    </div>
-                    <h3 className="font-title-sm mb-4" style={{ color: "var(--color-on-surface)" }}>
-                      Gandhinagar Depot <ArrowRight className="inline w-4 h-4 mx-1" /> Ahmedabad Hub
-                    </h3>
-                    <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>
-                        <Truck className="w-4 h-4" />
-                        <span className="text-sm">VAN-05 / ALEX</span>
+            {tripsLoading ? (
+              <LoadingSpinner />
+            ) : tripsError ? (
+              <div className="p-6">
+                <ErrorState error={tripsError as Error} />
+              </div>
+            ) : (
+              <div className="space-y-stack_md">
+                {trips.length === 0 ? (
+                  <div className="p-6 text-center text-zinc-400">
+                    <p>No trips yet. Dispatch one from the left panel.</p>
+                  </div>
+                ) : (
+                  trips.map((trip: any) => (
+                    <div key={trip.id}
+                      className={clsx("border rounded-lg p-stack_lg relative overflow-hidden transition-all", trip.status === "Dispatched" ? "hover:border-secondary group" : "")}
+                      style={{
+                        backgroundColor: trip.status === "Cancelled" ? "var(--color-surface-container)" : "var(--color-surface-container-high)",
+                        borderColor: trip.status === "Dispatched" ? "color-mix(in srgb, var(--color-secondary) 30%, transparent)" : trip.status === "Cancelled" ? "color-mix(in srgb, var(--color-error) 20%, transparent)" : "var(--color-outline-variant)",
+                        opacity: trip.status === "Cancelled" ? 0.7 : 1,
+                      }}
+                    >
+                      <div className="absolute left-0 top-0 bottom-0 w-1" style={{
+                        backgroundColor: trip.status === "Dispatched" ? "var(--color-secondary)" : trip.status === "Cancelled" ? "var(--color-error)" : "var(--color-outline-variant)"
+                      }} />
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-1">
+                            <span className="font-data-mono text-sm" style={{
+                              color: trip.status === "Dispatched" ? "var(--color-secondary)" : trip.status === "Cancelled" ? "var(--color-error)" : "var(--color-on-surface-variant)"
+                            }}>{trip.id}</span>
+                            <span
+                              className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase"
+                              style={{
+                                backgroundColor: trip.status === "Dispatched" ? "color-mix(in srgb, var(--color-secondary) 15%, transparent)" : trip.status === "Cancelled" ? "color-mix(in srgb, var(--color-error-container) 20%, transparent)" : "var(--color-surface-variant)",
+                                color: trip.status === "Dispatched" ? "var(--color-secondary)" : trip.status === "Cancelled" ? "var(--color-error)" : "var(--color-on-surface-variant)",
+                              }}
+                            >{trip.status}</span>
+                          </div>
+                          <h3 className="font-title-sm mb-4" style={{ color: trip.status === "Cancelled" ? "var(--color-on-surface-variant)" : "var(--color-on-surface)" }}>
+                            {trip.source} <ArrowRight className="inline w-4 h-4 mx-1" /> {trip.destination}
+                          </h3>
+                          <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>
+                              <Truck className="w-4 h-4" />
+                              <span className="text-sm">{trip.vehicle || "Unassigned"} / {trip.driver || "Unassigned"}</span>
+                            </div>
+                            {trip.status === "Dispatched" && (
+                              <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>
+                                <Clock className="w-4 h-4" />
+                                <span className="text-sm">{trip.eta || "In transit"}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <button className="p-2 rounded-full transition-colors hover:bg-surface-container-highest">
+                          <MoreVertical className="w-4 h-4" style={{ color: "var(--color-on-surface-variant)" }} />
+                        </button>
                       </div>
-                      <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>
-                        <Clock className="w-4 h-4" />
-                        <span className="text-sm">45 min in transit</span>
-                      </div>
+                      {trip.status === "Dispatched" && (
+                        <div className="mt-4 pt-4 border-t flex justify-between items-center gap-4" style={{ borderColor: "color-mix(in srgb, var(--color-outline-variant) 30%, transparent)" }}>
+                          <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--color-surface)" }}>
+                            <div className="h-full rounded-full" style={{ width: `${trip.progress || 0}%`, backgroundColor: "var(--color-secondary)" }} />
+                          </div>
+                          <span className="font-data-mono text-xs shrink-0" style={{ color: "var(--color-secondary)" }}>{trip.progress || 0}%</span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <button className="p-2 rounded-full transition-colors hover:bg-surface-container-highest">
-                    <MoreVertical className="w-4 h-4" style={{ color: "var(--color-on-surface-variant)" }} />
-                  </button>
-                </div>
-                <div className="mt-4 pt-4 border-t flex justify-between items-center gap-4" style={{ borderColor: "color-mix(in srgb, var(--color-outline-variant) 30%, transparent)" }}>
-                  <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: "var(--color-surface)" }}>
-                    <div className="h-full rounded-full w-[65%]" style={{ backgroundColor: "var(--color-secondary)" }} />
-                  </div>
-                  <span className="font-data-mono text-xs shrink-0" style={{ color: "var(--color-secondary)" }}>65%</span>
-                </div>
+                  ))
+                )}
               </div>
-
-              {/* TR004 — Draft */}
-              <div
-                className="border rounded-lg p-stack_lg relative overflow-hidden opacity-80 transition-all"
-                style={{
-                  backgroundColor: "var(--color-surface-container)",
-                  borderColor: "var(--color-outline-variant)",
-                }}
-              >
-                <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: "var(--color-outline-variant)" }} />
-                <div className="flex items-center gap-3 mb-1">
-                  <span className="font-data-mono text-sm" style={{ color: "var(--color-on-surface-variant)" }}>TR004</span>
-                  <span
-                    className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase"
-                    style={{ backgroundColor: "var(--color-surface-variant)", color: "var(--color-on-surface-variant)" }}
-                  >Draft</span>
-                </div>
-                <h3 className="font-title-sm mb-4" style={{ color: "var(--color-on-surface)" }}>
-                  Vatva Industrial Area <ArrowRight className="inline w-4 h-4 mx-1" /> Sanand Warehouse
-                </h3>
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>
-                    <Truck className="w-4 h-4" />
-                    <span className="text-sm">TRUCK-04 / SURESH</span>
-                  </div>
-                  <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>
-                    <Hourglass className="w-4 h-4" />
-                    <span className="text-sm italic">Awaiting driver confirmation</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* TR006 — Cancelled */}
-              <div
-                className="border rounded-lg p-stack_lg relative overflow-hidden opacity-70 transition-all"
-                style={{
-                  backgroundColor: "var(--color-surface-container)",
-                  borderColor: "color-mix(in srgb, var(--color-error) 20%, transparent)",
-                }}
-              >
-                <div className="absolute left-0 top-0 bottom-0 w-1" style={{ backgroundColor: "var(--color-error)" }} />
-                <div className="flex items-center gap-3 mb-1">
-                  <span className="font-data-mono text-sm" style={{ color: "var(--color-error)" }}>TR006</span>
-                  <span
-                    className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase"
-                    style={{
-                      backgroundColor: "color-mix(in srgb, var(--color-error-container) 20%, transparent)",
-                      color: "var(--color-error)",
-                    }}
-                  >Cancelled</span>
-                </div>
-                <h3 className="font-title-sm mb-4" style={{ color: "var(--color-on-surface-variant)" }}>
-                  Mansa <ArrowRight className="inline w-4 h-4 mx-1" /> Kalol Depot
-                </h3>
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center gap-2" style={{ color: "color-mix(in srgb, var(--color-error) 60%, transparent)" }}>
-                    <UserX className="w-4 h-4" />
-                    <span className="text-sm">Unassigned</span>
-                  </div>
-                  <div className="flex items-center gap-2" style={{ color: "var(--color-on-surface-variant)" }}>
-                    <Info className="w-4 h-4" />
-                    <span className="text-sm">Vehicle sent to shop</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Empty state */}
-              <div
-                className="border-2 border-dashed rounded-lg p-10 flex flex-col items-center justify-center gap-2 text-center opacity-50"
-                style={{ borderColor: "color-mix(in srgb, var(--color-outline-variant) 30%, transparent)" }}
-              >
-                <PlusCircle className="w-8 h-8" style={{ color: "var(--color-outline-variant)" }} />
-                <p className="text-sm" style={{ color: "var(--color-on-surface-variant)" }}>
-                  No other active trips. Dispatch from the left panel.
-                </p>
-              </div>
-            </div>
+            )}
           </section>
         </div>
       </div>
