@@ -343,7 +343,7 @@ export default function TripsPage() {
                 borderColor: "color-mix(in srgb, var(--color-outline-variant) 50%, transparent)",
               }}
             >
-              <p className="text-sm italic" style={{ color: "var(--color-on-surface-variant)" }}>
+              <p className="text-sm italic text-balance" style={{ color: "var(--color-on-surface-variant)" }}>
                 On Complete: odometer → fuel log → expenses → Vehicle &amp; Driver Available
               </p>
             </div>
@@ -394,10 +394,10 @@ export default function TripsPage() {
                       }} />
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
+                          <div className="flex items-center gap-3 mb-1 flex-wrap">
                             <span className="font-data-mono text-sm" style={{
                               color: trip.status === "Dispatched" ? "var(--color-secondary)" : trip.status === "Cancelled" ? "var(--color-error)" : "var(--color-on-surface-variant)"
-                            }}>{trip.id}</span>
+                            }} title={trip.id}>{trip.id.substring(0, 8)}</span>
                             <span
                               className="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase"
                               style={{
