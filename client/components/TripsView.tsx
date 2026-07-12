@@ -75,7 +75,7 @@ export const TripsView = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {trips.map((t) => (
+              {trips.map((t: any) => (
                 <tr key={t.id} className="hover:bg-zinc-50/50 transition-colors group">
                   <td className="py-4 px-6 font-semibold text-sm text-zinc-800">{t.id}</td>
                   <td className="py-4 px-6 text-sm text-zinc-700">{t.source}</td>

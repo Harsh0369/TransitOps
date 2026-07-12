@@ -7,6 +7,7 @@ import { DriverStatus } from '../types';
 
 export const DriversView = () => {
   const { data: drivers = [], isLoading } = useDrivers();
+  const sortedDrivers = [...drivers].sort((a: any, b: any) => b.safetyScore - a.safetyScore);
 
   const getStatusBadge = (status: DriverStatus) => {
     switch (status) {
@@ -66,7 +67,7 @@ export const DriversView = () => {
         <div className="p-8 text-center text-zinc-500">Loading drivers...</div>
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {drivers.map((drv) => (
+        {drivers.map((drv: any) => (
           <div key={drv.id} className="bg-white border border-zinc-100 hover:border-zinc-200 rounded-2xl p-5 shadow-sm space-y-4 flex flex-col justify-between group hover:shadow-md transition-all duration-200">
             <div className="space-y-3">
               <div className="flex items-start justify-between">

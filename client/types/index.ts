@@ -19,6 +19,9 @@ export interface Vehicle {
   acquisitionCost: number;
   status: VehicleStatus;
   region?: string;
+  insuranceExpiry?: string;
+  fitnessExpiry?: string;
+  pollutionExpiry?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -98,6 +101,10 @@ export interface AuditLog {
   entityId: string;
   userId: string;
   timestamp: string;
+  reason?: string;
+  user?: any;
+  createdAt?: string;
+  ipAddress?: string;
   oldValue?: any;
   newValue?: any;
   metadata?: any;
